@@ -1,0 +1,11 @@
+{
+  "backendUrl": "http://your-siem-server:4000",
+  "apiKey": "get_this_from_POST_/api/auth/login",
+  "logPaths": [
+    "/var/log/auth.log",
+    "/var/log/syslog",
+    "./logs/app.log"
+  ],
+  "retryInterval": 30000,
+  "source": "your-machine-name"
+}
