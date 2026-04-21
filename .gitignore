@@ -40,7 +40,6 @@ Thumbs.db
 *.sql.bak
 pgdata/
 
-# Temp files
-tmp/
-temp/
-*.tmp
+# Agent
+agent/config.json
+agent/pending-logs.json

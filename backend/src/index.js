@@ -1,59 +1,31 @@
-const express = require("express");
-const axios = require("axios");
+import { app } from './App.js';
+import { connectDB, pool } from './config/db.js';
 
-const app = express();
+const PORT = process.env.PORT || 4000;
 
-const LOKI_URL = "http://loki:3100";
-
-function detectAttack(logs) {
-  let failedCount = 0;
-  logs.forEach(log => {
-    if (log.includes("Failed login")) {
-      failedCount++;
-    }
+connectDB().then(() => {
+  const server = app.listen(PORT, () => {
+    console.log(`Backend running on port ${PORT}`);
   });
-  if (failedCount >= 3) {
-    return "Brute Force Attack Detected";
-  }
-  return null;
-}
 
-app.get("/logs", async (req, res) => {
-  try {
-    const response = await axios.get(
-      `${LOKI_URL}/loki/api/v1/query`,
-      {
-        params: {
-          query: '{job="sample_logs"}',
-        },
-      }
-    );
-
-    res.json(response.data);
-  } catch (err) {
-    res.status(500).send("Error fetching logs");
-  }
-});
-
-app.get("/analyze", async (req, res) => {
-  try {
-    const response = await axios.get(`${LOKI_URL}/loki/api/v1/query`, {
-      params: {
-        query: '{job="sample_logs"}',
-      },
+  // graceful shutdown — closes DB connections cleanly when Docker stops
+  process.on('SIGTERM', () => {
+    console.log('SIGTERM received. Shutting down gracefully...');
+    server.close(() => {
+      pool.end(() => {
+        console.log('DB pool closed');
+        process.exit(0);
+      });
     });
-    const logs = response.data.data.result[0]?.values || [];
-    const logMessages = logs.map(l => l[1]);
-    const alert = detectAttack(logMessages);
-    res.json({
-      logs: logMessages,
-      alert: alert,
-    });
-  } catch (err) {
-    res.status(500).send("Error analyzing logs");
-  }
-});
+  });
 
-app.listen(4000, () => {
-  console.log("Backend running on port 4000");
+  process.on('SIGINT', () => {
+    console.log('SIGINT received. Shutting down gracefully...');
+    server.close(() => {
+      pool.end(() => {
+        console.log('DB pool closed');
+        process.exit(0);
+      });
+    });
+  });
 });
