@@ -39,7 +39,17 @@ export const sendLog = async (raw) => {
   }
 };
 
-// flush all pending logs from disk in chunks with delay between each
+// send stop alert before agent exits
+export const sendStopAlert = async (signal) => {
+  try {
+    await httpClient.post('/api/logs', {
+      raw: `SECURITY: Agent stop attempt detected via ${signal} on ${config.source}`,
+      source: config.source,
+    });
+  } catch {
+    // best effort — if backend is down we can't do much
+  }
+};
 export const flushPendingLogs = async () => {
   const pending = getPendingLogs();
   if (pending.length === 0) return;

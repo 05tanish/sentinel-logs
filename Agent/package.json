@@ -1,7 +1,7 @@
 {
   "name": "siem-agent",
   "version": "1.0.0",
-  "description": "Real-time log collection agent for SIEM system",
+  "description": "Lightweight real-time log collection agent for SIEM systems",
   "type": "module",
   "main": "index.js",
   "bin": {
@@ -10,8 +10,29 @@
   "scripts": {
     "start": "node index.js"
   },
+  "files": [
+    "index.js",
+    "src/",
+    "config.example.json",
+    "README.md"
+  ],
+  "keywords": [
+    "siem",
+    "log",
+    "agent",
+    "security",
+    "monitoring",
+    "log-collection",
+    "cybersecurity"
+  ],
+  "author": "your-name",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "dependencies": {
     "axios": "^1.15.0",
-    "chokidar": "^3.6.0"
+    "chokidar": "^3.6.0",
+    "inquirer": "^13.4.2"
   }
 }

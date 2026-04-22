@@ -1,45 +1,59 @@
-# SIEM Agent
+# siem-agent
 
-Lightweight log collection agent. Reads log files and ships them to your SIEM backend.
+Lightweight real-time log collection agent for SIEM systems. Watches log files and ships them to your SIEM backend. Designed for high-security environments.
+
+## Install
+
+```bash
+npm install -g siem-agent
+```
 
 ## Setup
 
-1. Install dependencies
-   ```bash
-   npm install
-   ```
+```bash
+# Step 1 — interactive configuration
+siem-agent init
 
-2. Edit `config.json`
-   ```json
-   {
-     "backendUrl": "http://your-siem-server:4000",
-     "apiKey": "your_jwt_token",
-     "logPaths": ["/var/log/auth.log", "/var/log/syslog"],
-     "source": "web-server-1"
-   }
-   ```
+# Step 2 — install as system service (runs forever, survives reboots)
+sudo siem-agent install   # Linux / macOS
+# Run as Administrator on Windows
+```
 
-3. Run
-   ```bash
-   npm start
-   ```
+## Commands
 
-## How it works
+| Command | Description |
+|---|---|
+| `siem-agent init` | Interactive setup — creates config |
+| `siem-agent start` | Start in foreground |
+| `sudo siem-agent install` | Install as system service |
+| `sudo siem-agent uninstall` | Remove system service |
+| `siem-agent --help` | Show help |
 
-- Reads existing log lines on startup
-- Watches log files for new lines in real time
-- Sends logs in batches to backend
-- If backend is down — saves logs to `pending-logs.json` on disk
-- Automatically flushes pending logs when backend comes back online
+## Platform Support
 
-## Config options
+| OS | Service Manager | Auto-restart | Boot startup |
+|---|---|---|---|
+| Linux | systemd | ✅ | ✅ |
+| macOS | launchd | ✅ | ✅ |
+| Windows | Windows Service | ✅ | ✅ |
 
-| Key | Description | Default |
-|---|---|---|
-| `backendUrl` | Your SIEM backend URL | `http://localhost:4000` |
-| `apiKey` | JWT token from login | required |
-| `logPaths` | Array of log file paths to watch | `["./logs/app.log"]` |
-| `batchSize` | Logs per batch | `10` |
-| `flushInterval` | How often to send (ms) | `5000` |
-| `retryInterval` | How often to retry pending (ms) | `30000` |
-| `source` | Identifier for this machine | `client-machine-1` |
+## Security Features
+
+- Runs as root/SYSTEM — cannot be stopped by normal users
+- SIGTERM/SIGINT handlers — sends alert to SIEM before exiting
+- Heartbeat every 60s — SIEM detects silence if agent is killed
+- Offline storage — logs saved to disk if backend is unreachable
+- Chunked flush — sends pending logs in batches when backend recovers
+
+## Config Location
+
+```
+~/.siem-agent/config.json       ← your settings
+~/.siem-agent/pending-logs.json ← offline queue (auto-managed)
+```
+
+## Requirements
+
+- Node.js >= 18
+- Network access to SIEM backend
+- Root/Administrator for service installation
