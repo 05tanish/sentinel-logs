@@ -27,6 +27,7 @@ coverage/
 
 # OS files
 .DS_Store
+**/.DS_Store
 Thumbs.db
 
 # Editor files
@@ -42,4 +43,10 @@ pgdata/
 
 # Agent
 agent/config.json
+Agent/config.json
 agent/pending-logs.json
+Agent/pending-logs.json
+pending-logs.json
+
+# Internal docs (not for GitHub)
+ANALYSIS.md

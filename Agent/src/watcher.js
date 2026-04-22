@@ -2,54 +2,66 @@ import chokidar from 'chokidar';
 import { createReadStream, statSync, existsSync } from 'fs';
 import { createInterface } from 'readline';
 
-// tracks last read position per file — so we never re-read old lines
 const positions = {};
 
-// initialize position to end of file (don't re-read history on startup)
 const initPosition = (filePath) => {
   if (!positions[filePath]) {
     positions[filePath] = existsSync(filePath) ? statSync(filePath).size : 0;
   }
 };
 
-// read only new bytes added since last read
 const readNewLines = (filePath, onLine) => {
-  const currentSize = statSync(filePath).size;
-  const lastPos = positions[filePath] || 0;
+  try {
+    // guard: file may have been deleted between event and read
+    if (!existsSync(filePath)) {
+      console.warn(`[WATCHER] File no longer exists: ${filePath}`);
+      positions[filePath] = 0; // reset position for when it comes back
+      return;
+    }
 
-  if (currentSize <= lastPos) return; // nothing new
+    const currentSize = statSync(filePath).size;
+    const lastPos = positions[filePath] || 0;
 
-  const stream = createReadStream(filePath, {
-    start: lastPos,
-    end: currentSize - 1,
-    encoding: 'utf8',
-  });
+    // file was rotated (new file smaller than last position)
+    if (currentSize < lastPos) {
+      console.log(`[WATCHER] File rotated: ${filePath} — resetting position`);
+      positions[filePath] = 0;
+    }
 
-  const rl = createInterface({ input: stream });
+    if (currentSize <= positions[filePath]) return; // nothing new
 
-  rl.on('line', (line) => {
-    if (line.trim()) onLine(line);
-  });
+    const stream = createReadStream(filePath, {
+      start: positions[filePath],
+      end: currentSize - 1,
+      encoding: 'utf8',
+    });
 
-  rl.on('close', () => {
-    positions[filePath] = currentSize; // update position after reading
-  });
+    const rl = createInterface({ input: stream });
 
-  stream.on('error', (err) => {
-    console.error(`Stream error on ${filePath}:`, err.message);
-  });
+    rl.on('line', (line) => {
+      if (line.trim()) onLine(line);
+    });
+
+    rl.on('close', () => {
+      positions[filePath] = currentSize;
+    });
+
+    stream.on('error', (err) => {
+      console.error(`[WATCHER] Stream error on ${filePath}:`, err.message);
+    });
+  } catch (err) {
+    console.error(`[WATCHER] Error reading ${filePath}:`, err.message);
+  }
 };
 
-// watch files using chokidar — fires on every file change
 export const watchFiles = (filePaths, onNewLine) => {
-  // initialize positions first
   filePaths.forEach(initPosition);
 
   const watcher = chokidar.watch(filePaths, {
     persistent: true,
-    ignoreInitial: true,   // don't fire for existing content on startup
+    ignoreInitial: true,
     awaitWriteFinish: {
-      stabilityThreshold: 100,  // wait 100ms after write before firing
+      stabilityThreshold: 100,
       pollInterval: 50,
     },
   });
@@ -58,8 +70,20 @@ export const watchFiles = (filePaths, onNewLine) => {
     readNewLines(filePath, onNewLine);
   });
 
+  // handle file deletion — log rotation scenario
+  watcher.on('unlink', (filePath) => {
+    console.warn(`[WATCHER] File deleted: ${filePath} — will resume if recreated`);
+    positions[filePath] = 0;
+  });
+
+  // handle file recreation after deletion
+  watcher.on('add', (filePath) => {
+    console.log(`[WATCHER] File appeared: ${filePath} — resuming watch`);
+    positions[filePath] = 0;
+  });
+
   watcher.on('error', (err) => {
-    console.error('Watcher error:', err.message);
+    console.error('[WATCHER] Error:', err.message);
   });
 
   filePaths.forEach((f) => console.log(`Watching: ${f}`));

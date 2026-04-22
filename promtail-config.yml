@@ -14,4 +14,12 @@ scrape_configs:
           - localhost
         labels:
           job: sample_logs
-          __path__: /var/log/*.log
+          __path__: /var/log/app.log
+
+  - job_name: backend_logs
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: backend_logs
+          __path__: /var/log/backend.log

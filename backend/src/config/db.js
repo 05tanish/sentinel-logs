@@ -11,6 +11,9 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
+  max: 20,                  // max connections in pool
+  idleTimeoutMillis: 30000, // close idle connections after 30s
+  connectionTimeoutMillis: 2000, // fail fast if can't connect in 2s
 });
 
 export const connectDB = async (retries = 5) => {

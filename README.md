@@ -1,47 +1,161 @@
 # SIEM System
 
-A Security Information and Event Management (SIEM) system that collects, analyzes, and visualizes logs to detect security threats like brute force attacks.
+A portable, offline-capable Security Information and Event Management (SIEM) system for collecting, parsing, analyzing logs, and detecting cyber security threats.
 
 ## Stack
 
-- **Backend** — Node.js + Express (port 4000)
-- **Database** — PostgreSQL 15 (port 5432)
-- **Log Aggregation** — Grafana Loki (port 3100)
-- **Log Shipping** — Promtail
-- **Visualization** — Grafana (port 3000)
+| Component | Technology |
+|---|---|
+| Backend API | Node.js + Express |
+| Database | PostgreSQL 15 |
+| Log Aggregation | Grafana Loki |
+| Log Shipping | Promtail |
+| Visualization | Grafana |
+| Frontend | React + Vite |
+| Agent | Node.js + Chokidar |
+| Containerization | Docker + Docker Compose |
 
 ## Architecture
 
 ```
-logs/ ──► Promtail ──► Loki ──► Backend API ──► PostgreSQL
-                                     │
-                                  Grafana
+Client Machines
+  └── Agent (reads logs) ──► POST /api/logs
+                                    │
+                              Backend (Node.js)
+                              ├── Parse logs
+                              ├── Store in PostgreSQL
+                              ├── Run Rule Engine
+                              └── Create Alerts
+                                    │
+                         ┌──────────┴──────────┐
+                      PostgreSQL             Loki
+                         │                    │
+                         └──────── Grafana ───┘
+                                    │
+                               React Dashboard
 ```
 
-## Getting Started
+## Quick Start
 
 ### Prerequisites
-- Docker & Docker Compose installed
+- Docker and Docker Compose installed
 
-### Setup
+### 1. Clone the repo
+```bash
+git clone https://github.com/your-username/siem-project.git
+cd siem-project
+```
 
-1. Clone the repo
-   ```bash
-   git clone <your-repo-url>
-   cd siem-project
-   ```
+### 2. Configure environment
+```bash
+cp .env.example .env
+```
 
-2. Create your environment file
-   ```bash
-   cp .env.example .env
-   ```
+Edit `.env` with your values — especially change these:
+```
+POSTGRES_PASSWORD=your_strong_password
+JWT_SECRET=your_random_secret_here
+GF_SECURITY_ADMIN_PASSWORD=your_grafana_password
+```
 
-3. Fill in your values in `.env`
+### 3. Start all services
+```bash
+docker-compose up --build
+```
 
-4. Start all services
-   ```bash
-   docker-compose up --build
-   ```
+### 4. Seed admin user
+```bash
+docker exec siem-project-postgres-1 psql -U admin -d siem -c \
+  "INSERT INTO users (username, password, role) VALUES ('admin', '\$2a\$10\$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin');"
+```
+Default password is `password` — change it after first login.
+
+### 5. Access the system
+
+| Service | URL | Credentials |
+|---|---|---|
+| SIEM Dashboard | http://localhost:4000 | admin / password |
+| Grafana | http://localhost:3000 | admin / (from .env) |
+| Backend API | http://localhost:4000/api | JWT required |
+
+---
+
+## Agent Setup
+
+The agent runs on client machines and ships logs to the backend.
+
+```bash
+cd agent
+npm install
+cp config.example.json config.json
+```
+
+Edit `config.json`:
+```json
+{
+  "backendUrl": "http://your-siem-server:4000",
+  "apiKey": "get_from_login_response",
+  "logPaths": ["/var/log/auth.log", "/var/log/syslog"],
+  "source": "web-server-1"
+}
+```
+
+Run:
+```bash
+npm start
+```
+
+---
+
+## Features
+
+- **Multi-source log collection** — Agent, API, file upload (coming)
+- **Real-time detection** — Brute force, repeated failures, more coming
+- **RBAC** — Admin, Analyst, Viewer roles
+- **Grafana dashboards** — Auto-provisioned on startup
+- **Offline capable** — Agent stores logs locally when backend is down
+- **User management** — Admin creates users, synced to Grafana automatically
+- **Structured logging** — All events logged to Loki
+
+## API Endpoints
+
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| POST | `/api/auth/login` | None | Login |
+| POST | `/api/logs` | JWT | Ingest a log |
+| GET | `/api/logs` | JWT | Fetch logs from Loki |
+| GET | `/api/logs/severity/:level` | JWT | Filter logs by severity |
+| GET | `/api/alerts` | JWT | List alerts |
+| GET | `/api/alerts/stats` | JWT | Alert statistics |
+| PATCH | `/api/alerts/:id/acknowledge` | Analyst+ | Acknowledge alert |
+| PATCH | `/api/alerts/:id/resolve` | Analyst+ | Resolve alert |
+| POST | `/api/users` | Admin | Create user |
+| GET | `/api/users` | Admin | List users |
+| PATCH | `/api/users/:id/deactivate` | Admin | Deactivate user |
+
+## Project Structure
+
+```
+siem-project/
+├── backend/
+│   ├── src/
+│   │   ├── modules/
+│   │   │   ├── Auth/         ← login
+│   │   │   ├── Logsmodule/   ← ingestion, parsing, rule engine
+│   │   │   ├── Alerts/       ← alert management
+│   │   │   └── Users/        ← user management
+│   │   ├── middelware/       ← JWT auth, RBAC, error handling
+│   │   ├── utilis/           ← helpers, logger, JWT utils
+│   │   └── config/           ← DB connection, schema
+│   └── Dockerfile
+├── frontend/                 ← React dashboard
+├── agent/                    ← log collection agent
+├── grafana/provisioning/     ← auto-configured data sources
+├── logs/                     ← log files watched by Promtail
+├── docker-compose.yml
+├── promtail-config.yml
+└── .env.example
+```
 
 ## Environment Variables
 
@@ -52,56 +166,8 @@ See `.env.example` for all required variables.
 | `POSTGRES_USER` | PostgreSQL username |
 | `POSTGRES_PASSWORD` | PostgreSQL password |
 | `POSTGRES_DB` | Database name |
-| `DATABASE_URL` | Full PostgreSQL connection string |
-| `LOKI_URL` | Loki endpoint (default: http://loki:3100) |
-| `PORT` | Backend port (default: 4000) |
-| `JWT_SECRET` | Secret key for JWT tokens |
+| `DATABASE_URL` | Full connection string |
+| `JWT_SECRET` | Secret for signing JWT tokens |
+| `LOKI_URL` | Loki endpoint |
 | `GF_SECURITY_ADMIN_PASSWORD` | Grafana admin password |
-| `ALERT_THRESHOLD` | Failed login attempts before alert triggers |
-| `TIME_WINDOW_MINUTES` | Time window for brute force detection |
-
-## API Endpoints
-
-| Method | Endpoint | Description |
-|---|---|---|
-| GET | `/logs` | Fetch raw logs from Loki |
-| GET | `/analyze` | Analyze logs and detect attacks |
-
-### Example Response — `/analyze`
-
-```json
-{
-  "logs": ["Failed login for user admin", "..."],
-  "alert": "Brute Force Attack Detected"
-}
-```
-
-## Detection
-
-Currently detects:
-- **Brute Force** — triggers when 3+ `Failed login` entries are found in logs
-
-## Services
-
-| Service | URL |
-|---|---|
-| Backend API | http://localhost:4000 |
-| Grafana | http://localhost:3000 |
-| Loki | http://localhost:3100 |
-
-## Project Structure
-
-```
-siem-project/
-├── backend/
-│   ├── src/
-│   │   └── index.js
-│   ├── Dockerfile
-│   └── package.json
-├── logs/
-│   └── app.log
-├── docker-compose.yml
-├── promtail-config.yml
-├── .env.example
-└── README.md
-```
+| `PORT` | Backend port (default 4000) |
