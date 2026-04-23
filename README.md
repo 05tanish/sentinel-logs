@@ -58,25 +58,30 @@ JWT_SECRET=your_random_secret_here
 GF_SECURITY_ADMIN_PASSWORD=your_grafana_password
 ```
 
-### 3. Start all services
+### 3. Generate SSL certificates (first time only)
+```bash
+bash nginx/generate-certs.sh
+```
+
+### 4. Start all services
 ```bash
 docker-compose up --build
 ```
 
-### 4. Seed admin user
+### 5. Seed admin user
 ```bash
 docker exec siem-project-postgres-1 psql -U admin -d siem -c \
   "INSERT INTO users (username, password, role) VALUES ('admin', '\$2a\$10\$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin');"
 ```
 Default password is `password` — change it after first login.
 
-### 5. Access the system
+### 6. Access the system
 
 | Service | URL | Credentials |
 |---|---|---|
-| SIEM Dashboard | http://localhost:4000 | admin / password |
+| SIEM Dashboard | https://localhost | admin / password |
 | Grafana | http://localhost:3000 | admin / (from .env) |
-| Backend API | http://localhost:4000/api | JWT required |
+| Backend API | https://localhost/api | JWT required |
 
 ---
 

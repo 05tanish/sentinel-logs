@@ -48,5 +48,8 @@ agent/pending-logs.json
 Agent/pending-logs.json
 pending-logs.json
 
+# Nginx SSL certificates — never commit private keys
+nginx/certs/
+
 # Internal docs (not for GitHub)
 ANALYSIS.md
