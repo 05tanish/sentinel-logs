@@ -1,5 +1,10 @@
 import axios from 'axios';
+import { createReadStream } from 'fs';
+import { createInterface } from 'readline';
 import { pool } from '../../config/db.js';
+import { parseLog } from './parser.js';
+
+export { parseLog };
 
 const LOKI_URL = process.env.LOKI_URL || 'http://loki:3100';
 
@@ -21,20 +26,6 @@ export const fetchAndAnalyzeLogs = async () => {
 };
 
 // ─── Ingestion ───────────────────────────────────────────
-export const parseLog = (raw) => {
-  const ipMatch = raw.match(/\b(?:\d{1,3}\.){3}\d{1,3}\b/);
-  const userMatch = raw.match(/user[:\s]+(\w+)/i);
-  const failedLogin = raw.toLowerCase().includes('failed login');
-  const successLogin = raw.toLowerCase().includes('successful login');
-
-  return {
-    ip_address: ipMatch ? ipMatch[0] : null,
-    username: userMatch ? userMatch[1] : null,
-    event_type: failedLogin ? 'FAILED_LOGIN' : successLogin ? 'SUCCESSFUL_LOGIN' : 'GENERAL',
-    severity: failedLogin ? 'HIGH' : 'LOW',
-  };
-};
-
 export const storeLog = async ({ raw, source, timestamp, parsed }) => {
   const result = await pool.query(
     `INSERT INTO logs (raw, source, timestamp, ip_address, username, event_type, severity, parsed)
@@ -52,6 +43,42 @@ export const storeLog = async ({ raw, source, timestamp, parsed }) => {
     ]
   );
   return result.rows[0];
+};
+
+// ─── File Upload / USB Ingestion ─────────────────────────
+export const processLogFile = async (filePath, source = 'file-upload') => {
+  return new Promise((resolve, reject) => {
+    const stream = createReadStream(filePath, { encoding: 'utf8' });
+    const rl = createInterface({ input: stream });
+
+    let processed = 0;
+    let errors = 0;
+    const promises = [];
+
+    rl.on('line', (line) => {
+      if (!line.trim()) return;
+
+      const promise = (async () => {
+        try {
+          const parsed = parseLog(line);
+          await storeLog({ raw: line, source, parsed });
+          processed++;
+        } catch {
+          errors++;
+        }
+      })();
+
+      promises.push(promise);
+    });
+
+    rl.on('close', async () => {
+      await Promise.allSettled(promises);
+      resolve({ processed, errors });
+    });
+
+    rl.on('error', reject);
+    stream.on('error', reject);
+  });
 };
 
 // ─── Query ───────────────────────────────────────────────

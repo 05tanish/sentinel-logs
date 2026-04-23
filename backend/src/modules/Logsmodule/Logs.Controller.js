@@ -1,16 +1,32 @@
+import { unlinkSync } from 'fs';
+import multer from 'multer';
 import { AppError } from '../../utilis/ApiResponse.js';
 import { AsyncHandeler } from '../../utilis/Aysnchandler.js';
 import { successResponse } from '../../utilis/Sucessresponse.js';
 import { logSchema } from './Logs.Schema.js';
 import { runRuleEngine } from './RuleEngine.js';
-
 import {
   fetchLogs,
   fetchAndAnalyzeLogs,
   parseLog,
   storeLog,
   fetchLogsBySeverity,
+  processLogFile,
 } from './Logs.Service.js';
+
+// multer config — store in /tmp, max 50MB, only text files
+export const upload = multer({
+  dest: '/tmp/siem-uploads/',
+  limits: { fileSize: 50 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    const allowed = ['text/plain', 'application/octet-stream', 'text/x-log'];
+    if (allowed.includes(file.mimetype) || file.originalname.endsWith('.log')) {
+      cb(null, true);
+    } else {
+      cb(new AppError(400, 'Only .log and .txt files are allowed'));
+    }
+  },
+});
 
 export const getLogs = AsyncHandeler(async (_req, res) => {
   const data = await fetchLogs();
@@ -32,7 +48,6 @@ export const ingestLog = AsyncHandeler(async (req, res) => {
   const parsed = parseLog(raw);
   const log = await storeLog({ raw, source, timestamp, parsed });
 
-  // run rule engine async — don't block the response
   runRuleEngine(parsed).catch(console.error);
 
   return successResponse(res, {
@@ -46,4 +61,31 @@ export const getLogsBySeverity = AsyncHandeler(async (req, res) => {
   const { severity } = req.params;
   const data = await fetchLogsBySeverity(severity);
   return successResponse(res, { message: `Logs with severity ${severity} fetched`, data });
+});
+
+// POST /api/logs/upload — file upload from USB or local machine
+export const uploadLogs = AsyncHandeler(async (req, res) => {
+  if (!req.file) {
+    throw new AppError(400, 'No file uploaded');
+  }
+
+  const source = req.body.source || `file-upload:${req.file.originalname}`;
+
+  try {
+    const result = await processLogFile(req.file.path, source);
+
+    return successResponse(res, {
+      statusCode: 201,
+      message: `File processed successfully`,
+      data: {
+        filename: req.file.originalname,
+        processed: result.processed,
+        errors: result.errors,
+        source,
+      },
+    });
+  } finally {
+    // always delete temp file after processing
+    try { unlinkSync(req.file.path); } catch { /* ignore */ }
+  }
 });

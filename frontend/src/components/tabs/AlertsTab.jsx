@@ -62,7 +62,11 @@ export default function AlertsTab() {
       <div style={styles.tableWrap}>
         <div style={styles.tableHeader}>
           <h3 style={{ fontSize: 15 }}>Recent Alerts</h3>
-          <button style={styles.refreshBtn} onClick={load}>↻ Refresh</button>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <a href="/api/reports/csv" style={styles.downloadBtn}>⬇ CSV</a>
+            <a href="/api/reports/pdf" style={styles.downloadBtn}>⬇ PDF</a>
+            <button style={styles.refreshBtn} onClick={load}>↻ Refresh</button>
+          </div>
         </div>
 
         {loading ? (
@@ -120,6 +124,7 @@ const styles = {
   tableWrap: { background: '#1a1d27', border: '1px solid #2d3148', borderRadius: 10, overflow: 'hidden' },
   tableHeader: { padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #2d3148' },
   refreshBtn: { background: '#2d3148', border: 'none', color: '#94a3b8', padding: '6px 14px', borderRadius: 6, cursor: 'pointer', fontSize: 13 },
+  downloadBtn: { background: '#1e3a5f', color: '#93c5fd', padding: '6px 14px', borderRadius: 6, fontSize: 13, textDecoration: 'none', display: 'inline-block' },
   table: { width: '100%', borderCollapse: 'collapse' },
   th: { background: '#0f1117', padding: '12px 16px', textAlign: 'left', fontSize: 12, color: '#64748b', textTransform: 'uppercase' },
   td: { padding: '12px 16px', fontSize: 13, borderTop: '1px solid #2d3148' },
