@@ -10,6 +10,7 @@ import logsRoutes from './modules/Logsmodule/Logs.Routes.js';
 import alertsRoutes from './modules/Alerts/Alerts.Routes.js';
 import usersRoutes from './modules/Users/Users.Routes.js';
 import agentRoutes from './modules/Agent/Agent.Routes.js';
+import reportsRoutes from './modules/Reports/Reports.Routes.js';
 
 dotenv.config();
 
@@ -49,6 +50,7 @@ app.use('/api', logsRoutes);
 app.use('/api/alerts', alertsRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/api/agent', agentRoutes);
+app.use('/api/reports', reportsRoutes);
 
 // Health check
 app.get('/health', (_req, res) => res.json({ status: 'OK' }));
@@ -57,7 +59,7 @@ app.get('/health', (_req, res) => res.json({ status: 'OK' }));
 app.use(express.static(join(__dirname, '../../frontend/dist')));
 
 // Fallback for React Router
-app.get('*', (_req, res) => {
+app.get('/{*path}', (_req, res) => {
   res.sendFile(join(__dirname, '../../frontend/dist/index.html'));
 });
 

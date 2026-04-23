@@ -1,6 +1,12 @@
 import { app } from './App.js';
 import { connectDB, pool } from './config/db.js';
 import { checkSilentAgents } from './modules/Agent/Agent.Service.js';
+import { startSyslogServer } from './syslog.js';
+import { startRetentionJob } from './retention.js';
+import { validateEnv } from './validateEnv.js';
+
+// validate environment before anything else
+validateEnv();
 
 const PORT = process.env.PORT || 4000;
 
@@ -12,6 +18,12 @@ connectDB().then(() => {
   // background job — check for silent agents every 5 minutes
   setInterval(checkSilentAgents, 5 * 60 * 1000);
   console.log('Agent heartbeat monitor started (checks every 5 minutes)');
+
+  // start syslog UDP server
+  startSyslogServer();
+
+  // start log retention cleanup job
+  startRetentionJob();
 
   process.on('SIGTERM', () => {
     console.log('SIGTERM received. Shutting down gracefully...');
