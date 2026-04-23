@@ -23,10 +23,21 @@
     "security",
     "monitoring",
     "log-collection",
-    "cybersecurity"
+    "cybersecurity",
+    "offline",
+    "air-gapped"
   ],
-  "author": "your-name",
+  "author": "Tanish Jain",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/siem-project.git",
+    "directory": "Agent"
+  },
+  "homepage": "https://github.com/your-username/siem-project#readme",
+  "bugs": {
+    "url": "https://github.com/your-username/siem-project/issues"
+  },
   "engines": {
     "node": ">=18.0.0"
   },

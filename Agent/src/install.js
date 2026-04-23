@@ -1,9 +1,19 @@
 import os from 'os';
-import { writeFileSync, existsSync, mkdirSync } from 'fs';
+import { writeFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import { execSync } from 'child_process';
 
-const AGENT_BIN = process.execPath.replace('node', '') + 'siem-agent';
+// find the actual path of siem-agent binary
+const getAgentBin = () => {
+  try {
+    return execSync('which siem-agent 2>/dev/null || where siem-agent 2>nul')
+      .toString().trim().split('\n')[0];
+  } catch {
+    return process.argv[1]; // fallback to current script
+  }
+};
+
+const AGENT_BIN = getAgentBin();
 
 // ─── Linux — systemd ──────────────────────────────────────
 const installLinux = () => {
