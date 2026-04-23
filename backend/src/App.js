@@ -9,6 +9,7 @@ import authRoutes from './modules/Auth/Auth.Routes.js';
 import logsRoutes from './modules/Logsmodule/Logs.Routes.js';
 import alertsRoutes from './modules/Alerts/Alerts.Routes.js';
 import usersRoutes from './modules/Users/Users.Routes.js';
+import agentRoutes from './modules/Agent/Agent.Routes.js';
 
 dotenv.config();
 
@@ -47,6 +48,7 @@ app.use('/api/logs', logLimiter);
 app.use('/api', logsRoutes);
 app.use('/api/alerts', alertsRoutes);
 app.use('/api/users', usersRoutes);
+app.use('/api/agent', agentRoutes);
 
 // Health check
 app.get('/health', (_req, res) => res.json({ status: 'OK' }));

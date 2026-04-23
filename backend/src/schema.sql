@@ -32,3 +32,12 @@ CREATE TABLE IF NOT EXISTS alerts (
   resolved BOOLEAN DEFAULT FALSE,
   detected_at TIMESTAMP DEFAULT NOW()
 );
+
+CREATE TABLE IF NOT EXISTS agent_heartbeats (
+  id SERIAL PRIMARY KEY,
+  source VARCHAR(100) UNIQUE NOT NULL,  -- machine name
+  hostname VARCHAR(100),
+  platform VARCHAR(20),
+  last_seen TIMESTAMP DEFAULT NOW(),
+  status VARCHAR(20) DEFAULT 'online'   -- online / offline
+);

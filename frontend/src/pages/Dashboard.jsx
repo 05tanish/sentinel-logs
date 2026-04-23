@@ -4,6 +4,7 @@ import Navbar from '../components/Navbar';
 import AlertsTab from '../components/tabs/AlertsTab';
 import LogsTab from '../components/tabs/LogsTab';
 import UsersTab from '../components/tabs/UsersTab';
+import AgentsTab from '../components/tabs/AgentsTab';
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -12,6 +13,7 @@ export default function Dashboard() {
   const tabs = [
     { id: 'alerts', label: 'Alerts' },
     { id: 'logs', label: 'Logs' },
+    ...(user?.role === 'admin' || user?.role === 'analyst' ? [{ id: 'agents', label: 'Agents' }] : []),
     ...(user?.role === 'admin' ? [{ id: 'users', label: 'Users' }] : []),
   ];
 
@@ -34,6 +36,7 @@ export default function Dashboard() {
       <div style={styles.content}>
         {activeTab === 'alerts' && <AlertsTab />}
         {activeTab === 'logs' && <LogsTab />}
+        {activeTab === 'agents' && (user?.role === 'admin' || user?.role === 'analyst') && <AgentsTab />}
         {activeTab === 'users' && user?.role === 'admin' && <UsersTab />}
       </div>
     </div>
