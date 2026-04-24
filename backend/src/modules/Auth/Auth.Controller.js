@@ -1,8 +1,8 @@
 import { AppError } from '../../utilis/ApiResponse.js';
 import { AsyncHandeler } from '../../utilis/Aysnchandler.js';
 import { successResponse } from '../../utilis/Sucessresponse.js';
-import { loginSchema } from './Auth.Schema.js';
-import { loginUser } from './Auth.Service.js';
+import { loginSchema, changePasswordSchema, resetPasswordSchema } from './Auth.Schema.js';
+import { loginUser, changePassword, resetUserPassword } from './Auth.Service.js';
 
 export const login = AsyncHandeler(async (req, res) => {
   const parsed = loginSchema.safeParse(req.body);
@@ -10,4 +10,20 @@ export const login = AsyncHandeler(async (req, res) => {
 
   const data = await loginUser(parsed.data);
   return successResponse(res, { statusCode: 200, message: 'Login successful', data });
+});
+
+export const changeUserPassword = AsyncHandeler(async (req, res) => {
+  const parsed = changePasswordSchema.safeParse(req.body);
+  if (!parsed.success) throw new AppError(400, 'Validation failed', parsed.error.errors);
+
+  const data = await changePassword(req.user.id, parsed.data);
+  return successResponse(res, { statusCode: 200, message: 'Password changed successfully', data });
+});
+
+export const adminResetPassword = AsyncHandeler(async (req, res) => {
+  const parsed = resetPasswordSchema.safeParse(req.body);
+  if (!parsed.success) throw new AppError(400, 'Validation failed', parsed.error.errors);
+
+  const data = await resetUserPassword(req.user.id, parsed.data);
+  return successResponse(res, { statusCode: 200, message: 'Password reset successfully', data });
 });

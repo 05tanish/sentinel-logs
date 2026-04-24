@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
+import { useAuth } from '../../context/AuthContext';
 import api from '../../api/axios';
+import ResetPasswordModal from '../ResetPasswordModal';
 
 const roleBadgeColors = {
   admin: { bg: '#4c1d95', color: '#c4b5fd' },
@@ -8,10 +10,13 @@ const roleBadgeColors = {
 };
 
 export default function UsersTab() {
+  const { user: currentUser } = useAuth();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({ username: '', password: '', role: 'viewer' });
   const [formError, setFormError] = useState('');
+  const [showResetPassword, setShowResetPassword] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
 
   const load = async () => {
     setLoading(true);
@@ -40,112 +45,150 @@ export default function UsersTab() {
   const deactivate = async (id) => { await api.patch(`/api/users/${id}/deactivate`); load(); };
   const activate = async (id) => { await api.patch(`/api/users/${id}/activate`); load(); };
 
+  const handleResetPassword = (user) => {
+    setSelectedUser(user);
+    setShowResetPassword(true);
+  };
+
+  const handleResetPasswordSuccess = () => {
+    console.log('Password reset successfully');
+    load(); // Refresh the users list if needed
+  };
+
+  const isAdmin = currentUser?.role === 'admin';
+
   return (
-    <div>
-      {/* Grafana link */}
-      <a href="http://localhost:3000" target="_blank" rel="noreferrer" style={styles.grafanaLink}>
-        📊 Open Grafana Advanced Dashboards →
-      </a>
+    <>
+      <div>
+        {/* Grafana link */}
+        <a href="http://localhost:3000" target="_blank" rel="noreferrer" style={styles.grafanaLink}>
+          📊 Open Grafana Advanced Dashboards →
+        </a>
 
-      {/* Add user form */}
-      <div style={styles.formWrap}>
-        <h3 style={{ fontSize: 15, marginBottom: 16 }}>Add New User</h3>
-        {formError && <div style={styles.error}>{formError}</div>}
-        <form onSubmit={addUser} style={styles.form}>
-          <div style={styles.field}>
-            <label style={styles.label}>Username</label>
-            <input
-              style={styles.input}
-              type="text"
-              placeholder="username"
-              value={form.username}
-              onChange={(e) => setForm({ ...form, username: e.target.value })}
-              required
-            />
+        {/* Add user form - only for admins */}
+        {isAdmin && (
+          <div style={styles.formWrap}>
+            <h3 style={{ fontSize: 15, marginBottom: 16 }}>Add New User</h3>
+            {formError && <div style={styles.error}>{formError}</div>}
+            <form onSubmit={addUser} style={styles.form}>
+              <div style={styles.field}>
+                <label style={styles.label}>Username</label>
+                <input
+                  style={styles.input}
+                  type="text"
+                  placeholder="username"
+                  value={form.username}
+                  onChange={(e) => setForm({ ...form, username: e.target.value })}
+                  required
+                />
+              </div>
+              <div style={styles.field}>
+                <label style={styles.label}>Password</label>
+                <input
+                  style={styles.input}
+                  type="password"
+                  placeholder="min 8 characters"
+                  value={form.password}
+                  onChange={(e) => setForm({ ...form, password: e.target.value })}
+                  required
+                />
+              </div>
+              <div style={styles.field}>
+                <label style={styles.label}>Role</label>
+                <select
+                  style={styles.input}
+                  value={form.role}
+                  onChange={(e) => setForm({ ...form, role: e.target.value })}
+                >
+                  <option value="viewer">Viewer</option>
+                  <option value="analyst">Analyst</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
+              <button type="submit" style={styles.addBtn}>+ Add User</button>
+            </form>
           </div>
-          <div style={styles.field}>
-            <label style={styles.label}>Password</label>
-            <input
-              style={styles.input}
-              type="password"
-              placeholder="min 6 characters"
-              value={form.password}
-              onChange={(e) => setForm({ ...form, password: e.target.value })}
-              required
-            />
-          </div>
-          <div style={styles.field}>
-            <label style={styles.label}>Role</label>
-            <select
-              style={styles.input}
-              value={form.role}
-              onChange={(e) => setForm({ ...form, role: e.target.value })}
-            >
-              <option value="viewer">Viewer</option>
-              <option value="analyst">Analyst</option>
-              <option value="admin">Admin</option>
-            </select>
-          </div>
-          <button type="submit" style={styles.addBtn}>+ Add User</button>
-        </form>
-      </div>
-
-      {/* Users table */}
-      <div style={styles.tableWrap}>
-        <div style={styles.tableHeader}>
-          <h3 style={{ fontSize: 15 }}>All Users</h3>
-          <button style={styles.refreshBtn} onClick={load}>↻ Refresh</button>
-        </div>
-
-        {loading ? (
-          <div style={styles.empty}>Loading...</div>
-        ) : users.length === 0 ? (
-          <div style={styles.empty}>No users found</div>
-        ) : (
-          <table style={styles.table}>
-            <thead>
-              <tr>
-                {['ID', 'Username', 'Role', 'Status', 'Created', 'Actions'].map((h) => (
-                  <th key={h} style={styles.th}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {users.map((u) => (
-                <tr key={u.id}>
-                  <td style={styles.td}>{u.id}</td>
-                  <td style={styles.td}>{u.username}</td>
-                  <td style={styles.td}>
-                    <span style={{ ...styles.badge, ...(roleBadgeColors[u.role] || {}) }}>
-                      {u.role}
-                    </span>
-                  </td>
-                  <td style={styles.td}>{u.is_active ? '✅ Active' : '🔴 Inactive'}</td>
-                  <td style={styles.td}>{new Date(u.created_at).toLocaleDateString()}</td>
-                  <td style={styles.td}>
-                    {u.is_active ? (
-                      <button
-                        style={{ ...styles.actionBtn, background: '#2d1b1b', color: '#f87171' }}
-                        onClick={() => deactivate(u.id)}
-                      >
-                        Deactivate
-                      </button>
-                    ) : (
-                      <button
-                        style={{ ...styles.actionBtn, background: '#052e16', color: '#86efac' }}
-                        onClick={() => activate(u.id)}
-                      >
-                        Activate
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
         )}
+
+        {/* Users table */}
+        <div style={styles.tableWrap}>
+          <div style={styles.tableHeader}>
+            <h3 style={{ fontSize: 15 }}>All Users</h3>
+            <button style={styles.refreshBtn} onClick={load}>↻ Refresh</button>
+          </div>
+
+          {loading ? (
+            <div style={styles.empty}>Loading...</div>
+          ) : users.length === 0 ? (
+            <div style={styles.empty}>No users found</div>
+          ) : (
+            <table style={styles.table}>
+              <thead>
+                <tr>
+                  {['ID', 'Username', 'Role', 'Status', 'Created', 'Actions'].map((h) => (
+                    <th key={h} style={styles.th}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {users.map((u) => (
+                  <tr key={u.id}>
+                    <td style={styles.td}>{u.id}</td>
+                    <td style={styles.td}>{u.username}</td>
+                    <td style={styles.td}>
+                      <span style={{ ...styles.badge, ...(roleBadgeColors[u.role] || {}) }}>
+                        {u.role}
+                      </span>
+                    </td>
+                    <td style={styles.td}>{u.is_active ? '✅ Active' : '🔴 Inactive'}</td>
+                    <td style={styles.td}>{new Date(u.created_at).toLocaleDateString()}</td>
+                    <td style={styles.td}>
+                      <div style={styles.actionButtons}>
+                        {isAdmin && (
+                          <>
+                            {u.is_active ? (
+                              <button
+                                style={{ ...styles.actionBtn, background: '#2d1b1b', color: '#f87171' }}
+                                onClick={() => deactivate(u.id)}
+                              >
+                                Deactivate
+                              </button>
+                            ) : (
+                              <button
+                                style={{ ...styles.actionBtn, background: '#052e16', color: '#86efac' }}
+                                onClick={() => activate(u.id)}
+                              >
+                                Activate
+                              </button>
+                            )}
+                            <button
+                              style={{ ...styles.actionBtn, background: '#1e3a8a', color: '#93c5fd' }}
+                              onClick={() => handleResetPassword(u)}
+                            >
+                              Reset Password
+                            </button>
+                          </>
+                        )}
+                        {!isAdmin && u.id === currentUser?.id && (
+                          <span style={styles.currentUserLabel}>You</span>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
       </div>
-    </div>
+
+      <ResetPasswordModal
+        isOpen={showResetPassword}
+        onClose={() => setShowResetPassword(false)}
+        onSuccess={handleResetPasswordSuccess}
+        user={selectedUser}
+      />
+    </>
   );
 }
 
@@ -165,6 +208,8 @@ const styles = {
   th: { background: '#0f1117', padding: '12px 16px', textAlign: 'left', fontSize: 12, color: '#64748b', textTransform: 'uppercase' },
   td: { padding: '12px 16px', fontSize: 13, borderTop: '1px solid #2d3148', color: '#e2e8f0' },
   badge: { padding: '3px 8px', borderRadius: 4, fontSize: 11, fontWeight: 600 },
+  actionButtons: { display: 'flex', gap: 8, flexWrap: 'wrap' },
   actionBtn: { padding: '4px 10px', borderRadius: 4, border: 'none', cursor: 'pointer', fontSize: 12 },
+  currentUserLabel: { color: '#64748b', fontSize: 12, fontStyle: 'italic' },
   empty: { padding: 40, textAlign: 'center', color: '#64748b', fontSize: 14 },
 };
