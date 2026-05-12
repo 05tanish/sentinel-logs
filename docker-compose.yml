@@ -1,4 +1,16 @@
-version: "3.8"
+# Sentinel-Logs SIEM - Docker Compose Configuration
+# 
+# ⚠️  SECURITY NOTES FOR PRODUCTION:
+# 1. Bind services to localhost only (127.0.0.1) instead of 0.0.0.0
+# 2. Use strong passwords in .env file
+# 3. Enable firewall rules to restrict access
+# 4. Use proper SSL certificates (not self-signed)
+# 5. Consider using Docker secrets for sensitive data
+#
+# For production deployment, modify port bindings:
+#   - "3100:3100"  →  "127.0.0.1:3100:3100"  (Loki - internal only)
+#   - "5432:5432"  →  "127.0.0.1:5432:5432"  (PostgreSQL - internal only)
+#   - "3000:3000"  →  "127.0.0.1:3000:3000"  (Grafana - internal only)
 
 services:
   nginx:
