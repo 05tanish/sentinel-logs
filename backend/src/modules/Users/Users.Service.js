@@ -1,7 +1,7 @@
-import axios from 'axios';
+ import axios from 'axios';
 import { pool } from '../../config/db.js';
 import { AppError } from '../../utilis/ApiResponse.js';
-import { hashPassword } from '../../utilis/Password.validator.js';
+import { hashPassword, validatePasswordComplexity } from '../../utilis/Password.validator.js';
 import { logger } from '../../utilis/Logger.js';
 
 const ALLOWED_ROLES = ['admin', 'analyst', 'viewer'];
@@ -49,6 +49,16 @@ const createGrafanaUser = async (username, plainPassword, role) => {
 export const createUser = async ({ username, password, role = 'viewer' }) => {
   if (!ALLOWED_ROLES.includes(role)) {
     throw new AppError(400, `Invalid role. Must be one of: ${ALLOWED_ROLES.join(', ')}`);
+  }
+
+  // Validate password complexity
+  const validation = validatePasswordComplexity(password);
+  if (!validation.isValid) {
+    logger.warn('User creation failed - password complexity requirements not met', { 
+      username,
+      errors: validation.errors 
+    });
+    throw new AppError(400, 'Password does not meet complexity requirements', validation.errors);
   }
 
   // check duplicate
