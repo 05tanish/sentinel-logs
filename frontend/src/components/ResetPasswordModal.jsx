@@ -23,8 +23,8 @@ export default function ResetPasswordModal({ isOpen, onClose, onSuccess, user })
       return;
     }
 
-    if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(form.newPassword)) {
-      setError('Password must contain at least one uppercase letter, one lowercase letter, and one number');
+    if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{}|;:,.<>?])/.test(form.newPassword)) {
+      setError('Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character');
       return;
     }
 
@@ -39,7 +39,14 @@ export default function ResetPasswordModal({ isOpen, onClose, onSuccess, user })
       onSuccess?.();
       onClose();
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to reset password');
+      const errorMessage = err.response?.data?.message || 'Failed to reset password';
+      const errorDetails = err.response?.data?.errors;
+      
+      if (errorDetails && Array.isArray(errorDetails) && errorDetails.length > 0) {
+        setError(`${errorMessage}: ${errorDetails.join(', ')}`);
+      } else {
+        setError(errorMessage);
+      }
     } finally {
       setLoading(false);
     }
@@ -79,7 +86,7 @@ export default function ResetPasswordModal({ isOpen, onClose, onSuccess, user })
               required
             />
             <div style={styles.hint}>
-              Must be at least 8 characters with uppercase, lowercase, and number
+              Must be at least 8 characters with uppercase, lowercase, number, and special character
             </div>
           </div>
 

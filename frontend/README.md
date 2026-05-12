@@ -1,16 +1,98 @@
-# React + Vite
+# Sentinel-Logs Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Modern React dashboard for the Sentinel-Logs SIEM system.
 
-Currently, two official plugins are available:
+## Tech Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **React 19** with Hooks
+- **Vite** for fast builds
+- **Recharts** for visualizations
+- **Axios** for API calls
+- **Tailwind CSS** for styling
 
-## React Compiler
+## Quick Start
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```bash
+# Install dependencies
+npm install
 
-## Expanding the ESLint configuration
+# Run development server
+npm run dev
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+# Build for production
+npm run build
+
+# Preview production build
+npm run preview
+```
+
+## Features
+
+- 📊 **Real-time Dashboard** - Live log and alert monitoring
+- 🔍 **Log Search** - Advanced filtering and search
+- 🚨 **Alert Management** - Acknowledge and resolve alerts
+- 👥 **User Management** - RBAC with Admin/Analyst/Viewer roles
+- 🤖 **Agent Monitoring** - Track agent status and health
+- 📈 **Analytics** - Security metrics and trends
+
+## Project Structure
+
+```
+frontend/src/
+├── components/       # React components
+│   ├── tabs/        # Dashboard tabs
+│   ├── modals/      # Modal dialogs
+│   └── charts/      # Visualization components
+├── services/        # API services
+├── utils/           # Helper functions
+├── App.jsx          # Main app component
+└── main.jsx         # Entry point
+```
+
+## Configuration
+
+Edit `vite.config.js` for proxy settings:
+
+```javascript
+export default defineConfig({
+  server: {
+    proxy: {
+      '/api': 'http://localhost:4000'
+    }
+  }
+})
+```
+
+## Development
+
+```bash
+# Run with hot reload
+npm run dev
+
+# Lint code
+npm run lint
+
+# Format code
+npm run format
+```
+
+## Build
+
+```bash
+# Production build
+npm run build
+
+# Output: dist/
+```
+
+## Environment Variables
+
+Create `.env` file:
+
+```bash
+VITE_API_URL=https://your-backend-url
+```
+
+## License
+
+MIT License - see [LICENSE](../LICENSE)

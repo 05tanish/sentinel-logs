@@ -38,7 +38,14 @@ export default function UsersTab() {
       setForm({ username: '', password: '', role: 'viewer' });
       load();
     } catch (err) {
-      setFormError(err.response?.data?.message || 'Failed to create user');
+      const errorMessage = err.response?.data?.message || 'Failed to create user';
+      const errorDetails = err.response?.data?.errors;
+      
+      if (errorDetails && Array.isArray(errorDetails) && errorDetails.length > 0) {
+        setFormError(`${errorMessage}: ${errorDetails.join(', ')}`);
+      } else {
+        setFormError(errorMessage);
+      }
     }
   };
 
