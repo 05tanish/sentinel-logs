@@ -102,14 +102,18 @@ setInterval(flushPendingLogs, config.retryInterval);
 setInterval(async () => {
   try {
     const { default: axios } = await import('axios');
+    const { default: https } = await import('https');
     await axios.post(`${config.backendUrl}/api/agent/heartbeat`, {
       source: config.source,
       hostname: os.hostname(),
       platform: os.platform(),
       status: 'running',
     }, {
-      headers: { Authorization: `Bearer ${config.apiKey}` },
+      headers: { 'x-api-key': config.apiKey },
       timeout: 5000,
+      httpsAgent: new https.Agent({
+        rejectUnauthorized: false  // Accept self-signed certificates
+      })
     });
   } catch {
     // heartbeat failure is silent — backend will detect silence

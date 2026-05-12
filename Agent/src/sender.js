@@ -1,4 +1,5 @@
 import axios from 'axios';
+import https from 'https';
 import config from './config.js';
 import {
   saveToPendingFile,
@@ -15,7 +16,10 @@ const CHUNK_DELAY = 500;    // ms between chunks — prevents bottleneck
 const httpClient = axios.create({
   baseURL: config.backendUrl,
   timeout: 5000,
-  headers: { Authorization: `Bearer ${config.apiKey}` },
+  headers: { 'x-api-key': config.apiKey },
+  httpsAgent: new https.Agent({
+    rejectUnauthorized: false  // Accept self-signed certificates
+  })
 });
 
 // check if backend is reachable
