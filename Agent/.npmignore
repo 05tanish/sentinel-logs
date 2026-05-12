@@ -1,0 +1,31 @@
+# NPM Ignore File
+# Files to exclude from NPM package
+
+# Development files
+node_modules/
+*.log
+.DS_Store
+.env
+.env.*
+
+# Test files
+test/
+tests/
+*.test.js
+*.spec.js
+
+# Config files (users should create their own)
+config.json
+
+# Git files
+.git/
+.gitignore
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+Thumbs.db
