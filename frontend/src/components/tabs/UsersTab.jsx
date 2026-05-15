@@ -58,8 +58,7 @@ export default function UsersTab() {
   };
 
   const handleResetPasswordSuccess = () => {
-    console.log('Password reset successfully');
-    load(); // Refresh the users list if needed
+    load();
   };
 
   const isAdmin = currentUser?.role === 'admin';

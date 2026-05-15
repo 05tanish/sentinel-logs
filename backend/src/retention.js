@@ -7,12 +7,10 @@ const ALERT_RETENTION_DAYS = parseInt(process.env.ALERT_RETENTION_DAYS) || 365;
 
 export const runRetentionCleanup = async () => {
   try {
-    // delete old logs
     const logsResult = await pool.query(
       `DELETE FROM logs WHERE created_at < NOW() - INTERVAL '${LOG_RETENTION_DAYS} days'`
     );
 
-    // delete old resolved alerts only — keep unresolved ones forever
     const alertsResult = await pool.query(
       `DELETE FROM alerts WHERE resolved = true AND detected_at < NOW() - INTERVAL '${ALERT_RETENTION_DAYS} days'`
     );

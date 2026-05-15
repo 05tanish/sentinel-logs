@@ -124,9 +124,7 @@ const authLimiter = createRateLimiter(15 * 60 * 1000, 10, 'Too many authenticati
 const apiLimiter = createRateLimiter(60 * 1000, 100, 'API rate limit exceeded.');
 const logLimiter = createRateLimiter(60 * 1000, 1000, 'Log ingestion rate limit exceeded.');
 
-// Security headers middleware
 app.use((req, res, next) => {
-  // Remove server header
   res.removeHeader('X-Powered-By');
   
   // Add security headers

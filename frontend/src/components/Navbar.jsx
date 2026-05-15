@@ -22,8 +22,7 @@ export default function Navbar() {
   };
 
   const handlePasswordChangeSuccess = () => {
-    // Could show a success message here
-    console.log('Password changed successfully');
+    // Password changed successfully
   };
 
   // Close menu when clicking outside
