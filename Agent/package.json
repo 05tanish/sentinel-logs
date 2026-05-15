@@ -1,19 +1,22 @@
 {
 "name": "sentinel-logs-agent",
-  "version": "1.0.2",
+  "version": "1.0.4",
   "description": "Lightweight cross-platform log collection agent for Sentinel-Logs SIEM - Works on Linux, Windows, macOS",
   "type": "module",
   "main": "index.js",
   "bin": {
     "sentinel-agent": "./index.js",
-    "siem-agent": "./index.js"
+    "siem-agent": "./index.js",
+    "siem-agent-diagnose": "./diagnose.js"
   },
   "scripts": {
     "start": "node index.js",
-    "test": "echo \"No tests yet\" && exit 0"
+    "test": "mocha test/**/*.test.js --timeout 5000",
+    "test:watch": "mocha test/**/*.test.js --watch"
   },
   "files": [
     "index.js",
+    "diagnose.js",
     "src/",
     "config.example.json",
     "README.md"
@@ -60,5 +63,10 @@
     "axios": "^1.15.0",
     "chokidar": "^3.6.0",
     "inquirer": "^13.4.2"
+  },
+  "devDependencies": {
+    "mocha": "^10.2.0",
+    "chai": "^4.3.10",
+    "sinon": "^17.0.1"
   }
 }
