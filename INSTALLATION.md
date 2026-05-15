@@ -106,17 +106,59 @@ ON CONFLICT (username) DO NOTHING;"
 
 Install agents on servers you want to monitor.
 
+### Step 0: Setup Logging (Important!)
+
+**Modern Linux systems (Kali, Ubuntu 20+, Debian 11+) use journalctl instead of traditional log files.**
+
+Run this script to auto-detect and configure logging:
+
+```bash
+# Download and run setup script
+curl -O https://raw.githubusercontent.com/05tanish/sentinel-logs/main/scripts/setup-logging.sh
+sudo bash setup-logging.sh
+```
+
+**Or manual setup:**
+
+```bash
+# Check if you have traditional logs
+ls -la /var/log/auth.log
+
+# If file doesn't exist, install rsyslog
+sudo apt install rsyslog -y
+sudo systemctl start rsyslog
+sudo systemctl enable rsyslog
+
+# Verify auth.log was created
+ls -la /var/log/auth.log
+```
+
 ### Method 1: NPM (Recommended)
 
 ```bash
-# Install globally
-npm install -g sentinel-logs-agent
+# Install globally (v1.0.4 with diagnostics)
+sudo npm install -g sentinel-logs-agent@latest
+
+# Test connectivity first
+siem-agent-diagnose
 
 # Configure
 siem-agent init
 
 # Start
 siem-agent start
+```
+
+**Update to latest version:**
+```bash
+# Update globally installed agent
+sudo npm update -g sentinel-logs-agent
+
+# Or reinstall latest
+sudo npm install -g sentinel-logs-agent@latest
+
+# Check version
+npm list -g sentinel-logs-agent
 ```
 
 ### Method 2: From Source

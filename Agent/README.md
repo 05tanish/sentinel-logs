@@ -59,6 +59,20 @@ node index.js
 siem-agent start
 ```
 
+### 3. Diagnose Connectivity (if issues)
+
+```bash
+# Test connection to backend
+siem-agent-diagnose
+```
+
+This will test:
+- Network connectivity
+- Port accessibility
+- Backend API health
+- Authentication
+- Log ingestion
+
 ## Configuration
 
 | Parameter | Required | Description | Example |

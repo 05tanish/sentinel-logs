@@ -98,8 +98,11 @@ React Dashboard + Grafana
 Install agents on your servers to collect logs:
 
 ```bash
-# Install from NPM
-npm install -g sentinel-logs-agent
+# Install from NPM (latest version with diagnostics)
+sudo npm install -g sentinel-logs-agent@latest
+
+# Test connectivity to backend
+siem-agent-diagnose
 
 # Configure
 siem-agent init
@@ -133,9 +136,9 @@ Or deploy from source - see [INSTALLATION.md](INSTALLATION.md) for details.
 ## 📚 Documentation
 
 - **[INSTALLATION.md](INSTALLATION.md)** - Complete installation guide
-- **[GitHub Wiki](https://github.com/05tanish/sentinel-logs/wiki)** - Detailed documentation, API reference, troubleshooting
+- **[GitHub Wiki](https://github.com/05tanish/sentinel-logs/wiki)** - Detailed documentation and troubleshooting
 
-For detailed documentation including API reference, configuration guide, and troubleshooting, visit our [GitHub Wiki](https://github.com/05tanish/sentinel-logs/wiki).
+For detailed documentation, configuration guide, and troubleshooting, visit our [GitHub Wiki](https://github.com/05tanish/sentinel-logs/wiki).
 
 ---
 
