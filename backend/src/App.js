@@ -8,8 +8,7 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { errorHandler, notFoundHandler, asyncHandler } from './middelware/ErrorMiddelware.js';
 import { metricsMiddleware, metricsEndpoint } from './middelware/metrics.js';
-import { checkDBHealth } from './config/db.js';
-import pool from './config/db.js';
+import { checkDBHealth, pool } from './config/db.js';
 import authRoutes from './modules/Auth/Auth.Routes.js';
 import logsRoutes from './modules/Logsmodule/Logs.Routes.js';
 import alertsRoutes from './modules/Alerts/Alerts.Routes.js';
@@ -223,22 +222,37 @@ app.get('/api/admin/errors', asyncHandler(async (req, res) => {
   res.json({ success: true, data: errors.rows });
 }));
 
-// Serve frontend production build (only in production)
-if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(join(__dirname, '../../frontend/dist'), {
-    maxAge: '1d',
-    etag: true,
-    lastModified: true
-  }));
-}
-
-// 404 handler for API routes - use middleware instead of route
+// 404 handler for API routes only
 app.use((req, res, next) => {
-  if (req.path.startsWith('/api')) {
+  if (req.path.startsWith('/api/')) {
     return notFoundHandler(req, res, next);
   }
   next();
 });
+
+// Debug: Check NODE_ENV
+console.log('NODE_ENV:', process.env.NODE_ENV);
+console.log('Is production?', process.env.NODE_ENV === 'production');
+
+// Serve frontend production build (only in production)
+if (process.env.NODE_ENV === 'production') {
+  const frontendPath = join(__dirname, '../frontend/dist');
+  console.log('Serving frontend from:', frontendPath);
+  
+  app.use(express.static(frontendPath, {
+    maxAge: '1d',
+    etag: true,
+    lastModified: true
+  }));
+  
+  // Catch-all route to serve index.html for client-side routing
+  // Use regex to match all non-API routes
+  app.get(/^\/(?!api).*/, (req, res) => {
+    res.sendFile(join(frontendPath, 'index.html'));
+  });
+} else {
+  console.log('Not serving frontend - NODE_ENV is not production');
+}
 
 // Global error handler (must be last)
 app.use(errorHandler);

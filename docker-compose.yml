@@ -31,8 +31,12 @@ services:
       - "4000"
     ports:
       - "514:514/udp"
+    environment:
+      - NODE_ENV=production
     env_file:
       - .env
+    volumes:
+      - ./frontend/dist:/app/frontend/dist:ro
     depends_on:
       - loki
       - postgres
