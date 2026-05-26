@@ -26,40 +26,57 @@ export default function Login() {
   };
 
   return (
-    <div style={styles.page}>
-      <div style={styles.box}>
-        <div style={styles.logo}>
-          <h1 style={styles.logoTitle}>⚡ SIEM</h1>
-          <p style={styles.logoSub}>Security Information & Event Management</p>
+    <div style={s.page}>
+      <div style={s.card}>
+        {/* Logo */}
+        <div style={s.logoArea}>
+          <div style={s.logoMark}>
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <rect x="2" y="2" width="7" height="7" rx="1.5" fill="var(--accent)" opacity="0.9"/>
+              <rect x="11" y="2" width="7" height="7" rx="1.5" fill="var(--accent)" opacity="0.5"/>
+              <rect x="2" y="11" width="7" height="7" rx="1.5" fill="var(--accent)" opacity="0.5"/>
+              <rect x="11" y="11" width="7" height="7" rx="1.5" fill="var(--accent)" opacity="0.25"/>
+            </svg>
+          </div>
+          <h1 style={s.logoText}>Sentinel</h1>
         </div>
 
-        {error && <div style={styles.error}>{error}</div>}
+        <p style={s.subtitle}>Security Information & Event Management</p>
 
-        <form onSubmit={handleSubmit}>
-          <div style={styles.field}>
-            <label style={styles.label}>Username</label>
+        {error && (
+          <div style={s.errorBanner}>
+            <span style={s.errorDot} />
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} style={s.form}>
+          <div style={s.field}>
+            <label style={s.label}>Username</label>
             <input
-              style={styles.input}
+              style={s.input}
               type="text"
-              placeholder="Enter username"
+              placeholder="Enter your username"
               value={form.username}
               onChange={(e) => setForm({ ...form, username: e.target.value })}
+              autoComplete="username"
               required
             />
           </div>
-          <div style={styles.field}>
-            <label style={styles.label}>Password</label>
+          <div style={s.field}>
+            <label style={s.label}>Password</label>
             <input
-              style={styles.input}
+              style={s.input}
               type="password"
-              placeholder="Enter password"
+              placeholder="Enter your password"
               value={form.password}
               onChange={(e) => setForm({ ...form, password: e.target.value })}
+              autoComplete="current-password"
               required
             />
           </div>
-          <button style={loading ? styles.btnDisabled : styles.btn} disabled={loading}>
-            {loading ? 'Logging in...' : 'Login'}
+          <button style={loading ? s.btnLoading : s.btn} disabled={loading} type="submit">
+            {loading ? 'Signing in…' : 'Sign in'}
           </button>
         </form>
       </div>
@@ -67,16 +84,111 @@ export default function Login() {
   );
 }
 
-const styles = {
-  page: { background: '#0f1117', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' },
-  box: { background: '#1a1d27', border: '1px solid #2d3148', borderRadius: 12, padding: 40, width: '100%', maxWidth: 400 },
-  logo: { textAlign: 'center', marginBottom: 32 },
-  logoTitle: { fontSize: 24, color: '#6366f1', letterSpacing: 2 },
-  logoSub: { fontSize: 13, color: '#64748b', marginTop: 4 },
-  error: { background: '#2d1b1b', border: '1px solid #7f1d1d', color: '#fca5a5', padding: '10px 14px', borderRadius: 8, fontSize: 13, marginBottom: 16 },
-  field: { marginBottom: 20 },
-  label: { display: 'block', fontSize: 13, color: '#94a3b8', marginBottom: 6 },
-  input: { width: '100%', padding: '10px 14px', background: '#0f1117', border: '1px solid #2d3148', borderRadius: 8, color: '#e2e8f0', fontSize: 14, outline: 'none', boxSizing: 'border-box' },
-  btn: { width: '100%', padding: 12, background: '#6366f1', color: 'white', border: 'none', borderRadius: 8, fontSize: 15, cursor: 'pointer' },
-  btnDisabled: { width: '100%', padding: 12, background: '#374151', color: '#9ca3af', border: 'none', borderRadius: 8, fontSize: 15, cursor: 'not-allowed' },
+const s = {
+  page: {
+    background: 'var(--bg-base)',
+    minHeight: '100vh',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: '24px',
+  },
+  card: {
+    background: 'var(--bg-raised)',
+    border: '1px solid var(--border-default)',
+    borderRadius: '10px',
+    padding: '40px',
+    width: '100%',
+    maxWidth: '380px',
+    boxShadow: 'var(--shadow-lg)',
+  },
+  logoArea: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+    marginBottom: '8px',
+  },
+  logoMark: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logoText: {
+    fontSize: '18px',
+    fontWeight: '600',
+    color: 'var(--text-primary)',
+    letterSpacing: '-0.3px',
+  },
+  subtitle: {
+    fontSize: '13px',
+    color: 'var(--text-tertiary)',
+    marginBottom: '32px',
+    lineHeight: '1.4',
+  },
+  errorBanner: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    background: 'var(--red-subtle)',
+    border: '1px solid var(--red-border)',
+    color: 'var(--red)',
+    padding: '10px 14px',
+    borderRadius: 'var(--radius-md)',
+    fontSize: '13px',
+    marginBottom: '20px',
+  },
+  errorDot: {
+    width: '6px',
+    height: '6px',
+    borderRadius: '50%',
+    background: 'var(--red)',
+    flexShrink: 0,
+  },
+  form: { display: 'flex', flexDirection: 'column', gap: '0' },
+  field: { marginBottom: '18px' },
+  label: {
+    display: 'block',
+    fontSize: '12px',
+    fontWeight: '500',
+    color: 'var(--text-secondary)',
+    marginBottom: '6px',
+    letterSpacing: '0.02em',
+    textTransform: 'uppercase',
+  },
+  input: {
+    width: '100%',
+    padding: '9px 12px',
+    background: 'var(--bg-base)',
+    border: '1px solid var(--border-default)',
+    borderRadius: 'var(--radius-md)',
+    color: 'var(--text-primary)',
+    fontSize: '14px',
+    outline: 'none',
+    transition: 'border-color 0.15s',
+  },
+  btn: {
+    width: '100%',
+    padding: '10px',
+    background: 'var(--accent)',
+    color: '#fff',
+    border: 'none',
+    borderRadius: 'var(--radius-md)',
+    fontSize: '14px',
+    fontWeight: '500',
+    cursor: 'pointer',
+    marginTop: '8px',
+    letterSpacing: '0.01em',
+  },
+  btnLoading: {
+    width: '100%',
+    padding: '10px',
+    background: 'var(--bg-subtle)',
+    color: 'var(--text-tertiary)',
+    border: '1px solid var(--border-default)',
+    borderRadius: 'var(--radius-md)',
+    fontSize: '14px',
+    fontWeight: '500',
+    cursor: 'not-allowed',
+    marginTop: '8px',
+  },
 };

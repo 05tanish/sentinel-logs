@@ -1,18 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../api/axios';
-
-const severityColors = {
-  CRITICAL: { bg: '#450a0a', color: '#f87171' },
-  HIGH: { bg: '#431407', color: '#fb923c' },
-  MEDIUM: { bg: '#422006', color: '#fbbf24' },
-  LOW: { bg: '#052e16', color: '#86efac' },
-};
-
-const typeColors = {
-  BRUTE_FORCE: { bg: '#2d1b69', color: '#c4b5fd' },
-  REPEATED_USER_FAILURE: { bg: '#1e3a5f', color: '#93c5fd' },
-};
+import * as ui from '../ui';
 
 export default function AlertsTab() {
   const { user } = useAuth();
@@ -37,98 +26,180 @@ export default function AlertsTab() {
 
   useEffect(() => { load(); }, []);
 
-  const ack = async (id) => { await api.patch(`/api/alerts/${id}/acknowledge`); load(); };
-  const resolve = async (id) => { await api.patch(`/api/alerts/${id}/resolve`); load(); };
+  const ack     = async (id) => { await api.patch(`/api/alerts/${id}/acknowledge`); load(); };
+  const resolve = async (id) => { await api.patch(`/api/alerts/${id}/resolve`);     load(); };
+
+  const statItems = [
+    { label: 'Open',      value: stats?.open,     accent: 'var(--text-primary)' },
+    { label: 'Critical',  value: stats?.critical,  accent: 'var(--red)'    },
+    { label: 'High',      value: stats?.high,      accent: 'var(--orange)' },
+    { label: 'Medium',    value: stats?.medium,    accent: 'var(--yellow)' },
+    { label: 'Last 24 h', value: stats?.last_24h,  accent: 'var(--green)'  },
+  ];
 
   return (
     <div>
-      {/* Stats */}
-      <div style={styles.statsGrid}>
-        {[
-          { label: 'Open Alerts', value: stats?.open, color: '#6366f1' },
-          { label: 'Critical', value: stats?.critical, color: '#f87171' },
-          { label: 'High', value: stats?.high, color: '#fb923c' },
-          { label: 'Medium', value: stats?.medium, color: '#fbbf24' },
-          { label: 'Last 24h', value: stats?.last_24h, color: '#34d399' },
-        ].map((s) => (
-          <div key={s.label} style={styles.statCard}>
-            <div style={styles.statLabel}>{s.label}</div>
-            <div style={{ ...styles.statValue, color: s.color }}>{s.value ?? '—'}</div>
+      {/* Stats row */}
+      <div style={s.statsRow}>
+        {statItems.map((item) => (
+          <div key={item.label} style={s.statCard}>
+            <div style={s.statLabel}>{item.label}</div>
+            <div style={{ ...s.statValue, color: item.accent }}>
+              {item.value ?? <span style={{ color: 'var(--text-disabled)' }}>—</span>}
+            </div>
           </div>
         ))}
       </div>
 
       {/* Table */}
-      <div style={styles.tableWrap}>
-        <div style={styles.tableHeader}>
-          <h3 style={{ fontSize: 15 }}>Recent Alerts</h3>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <a href="/api/reports/csv" style={styles.downloadBtn}>⬇ CSV</a>
-            <a href="/api/reports/pdf" style={styles.downloadBtn}>⬇ PDF</a>
-            <button style={styles.refreshBtn} onClick={load}>↻ Refresh</button>
+      <div style={ui.card}>
+        <div style={ui.tableHeader}>
+          <span style={ui.tableTitle}>Open Alerts</span>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <a href="/api/reports/csv" style={s.exportBtn}>CSV</a>
+            <a href="/api/reports/pdf" style={s.exportBtn}>PDF</a>
+            <button style={ui.btnGhost} onClick={load}>
+              <RefreshIcon /> Refresh
+            </button>
           </div>
         </div>
 
         {loading ? (
-          <div style={styles.empty}>Loading...</div>
+          <div style={ui.emptyState}>Loading…</div>
         ) : alerts.length === 0 ? (
-          <div style={styles.empty}>No open alerts 🎉</div>
+          <div style={ui.emptyState}>No open alerts</div>
         ) : (
-          <table style={styles.table}>
-            <thead>
-              <tr>
-                {['Time', 'Type', 'Severity', 'Source IP', 'Username', 'Description', canAct && 'Actions']
-                  .filter(Boolean).map((h) => <th key={h} style={styles.th}>{h}</th>)}
-              </tr>
-            </thead>
-            <tbody>
-              {alerts.map((a) => (
-                <tr key={a.id}>
-                  <td style={styles.td}>{new Date(a.detected_at).toLocaleString()}</td>
-                  <td style={styles.td}>
-                    <span style={{ ...styles.badge, ...(typeColors[a.type] || {}) }}>
-                      {a.type.replace(/_/g, ' ')}
-                    </span>
-                  </td>
-                  <td style={styles.td}>
-                    <span style={{ ...styles.badge, ...(severityColors[a.severity] || {}) }}>
-                      {a.severity}
-                    </span>
-                  </td>
-                  <td style={styles.td}>{a.source_ip || '—'}</td>
-                  <td style={styles.td}>{a.username || '—'}</td>
-                  <td style={styles.td}>{a.description}</td>
-                  {canAct && (
-                    <td style={styles.td}>
-                      {!a.acknowledged && (
-                        <button style={{ ...styles.actionBtn, background: '#1e3a5f', color: '#93c5fd' }} onClick={() => ack(a.id)}>Ack</button>
-                      )}
-                      <button style={{ ...styles.actionBtn, background: '#052e16', color: '#86efac' }} onClick={() => resolve(a.id)}>Resolve</button>
-                    </td>
-                  )}
+          <div style={{ overflowX: 'auto' }}>
+            <table>
+              <thead>
+                <tr>
+                  {['Time', 'Type', 'Severity', 'Source IP', 'Username', 'Description', canAct && 'Actions']
+                    .filter(Boolean)
+                    .map((h) => <th key={h} style={ui.th}>{h}</th>)}
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {alerts.map((a) => (
+                  <tr key={a.id} style={s.row}>
+                    <td style={ui.td}>{fmtDate(a.detected_at)}</td>
+                    <td style={ui.td}>
+                      <span style={ui.typeBadge(a.type)}>
+                        {a.type.replace(/_/g, ' ')}
+                      </span>
+                    </td>
+                    <td style={ui.td}>
+                      <span style={ui.severityBadge(a.severity)}>{a.severity}</span>
+                    </td>
+                    <td style={{ ...ui.td, fontFamily: 'var(--font-mono)', fontSize: '12px' }}>
+                      {a.source_ip || <Dash />}
+                    </td>
+                    <td style={ui.td}>{a.username || <Dash />}</td>
+                    <td style={{ ...ui.td, maxWidth: '320px' }}>
+                      <span style={s.descText}>{a.description}</span>
+                    </td>
+                    {canAct && (
+                      <td style={ui.td}>
+                        <div style={{ display: 'flex', gap: '6px' }}>
+                          {!a.acknowledged && (
+                            <button style={s.ackBtn} onClick={() => ack(a.id)}>Ack</button>
+                          )}
+                          <button style={s.resolveBtn} onClick={() => resolve(a.id)}>Resolve</button>
+                        </div>
+                      </td>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
     </div>
   );
 }
 
-const styles = {
-  statsGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 16, marginBottom: 24 },
-  statCard: { background: '#1a1d27', border: '1px solid #2d3148', borderRadius: 10, padding: 20 },
-  statLabel: { fontSize: 12, color: '#64748b', marginBottom: 8 },
-  statValue: { fontSize: 32, fontWeight: 700 },
-  tableWrap: { background: '#1a1d27', border: '1px solid #2d3148', borderRadius: 10, overflow: 'hidden' },
-  tableHeader: { padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #2d3148' },
-  refreshBtn: { background: '#2d3148', border: 'none', color: '#94a3b8', padding: '6px 14px', borderRadius: 6, cursor: 'pointer', fontSize: 13 },
-  downloadBtn: { background: '#1e3a5f', color: '#93c5fd', padding: '6px 14px', borderRadius: 6, fontSize: 13, textDecoration: 'none', display: 'inline-block' },
-  table: { width: '100%', borderCollapse: 'collapse' },
-  th: { background: '#0f1117', padding: '12px 16px', textAlign: 'left', fontSize: 12, color: '#64748b', textTransform: 'uppercase' },
-  td: { padding: '12px 16px', fontSize: 13, borderTop: '1px solid #2d3148' },
-  badge: { padding: '3px 8px', borderRadius: 4, fontSize: 11, fontWeight: 600 },
-  actionBtn: { padding: '4px 10px', borderRadius: 4, border: 'none', cursor: 'pointer', fontSize: 12, marginRight: 4 },
-  empty: { padding: 40, textAlign: 'center', color: '#64748b', fontSize: 14 },
+const fmtDate = (d) => {
+  const dt = new Date(d);
+  return dt.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false });
+};
+
+const Dash = () => <span style={{ color: 'var(--text-disabled)' }}>—</span>;
+const RefreshIcon = () => (
+  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+    <path d="M10 6A4 4 0 1 1 6 2a4 4 0 0 1 3.5 2.1M10 2v2.5H7.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
+
+const s = {
+  statsRow: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(5, 1fr)',
+    gap: '12px',
+    marginBottom: '20px',
+  },
+  statCard: {
+    background: 'var(--bg-raised)',
+    border: '1px solid var(--border-default)',
+    borderRadius: 'var(--radius-lg)',
+    padding: '16px 20px',
+  },
+  statLabel: {
+    fontSize: '11px',
+    fontWeight: '600',
+    color: 'var(--text-tertiary)',
+    textTransform: 'uppercase',
+    letterSpacing: '0.06em',
+    marginBottom: '10px',
+  },
+  statValue: {
+    fontSize: '28px',
+    fontWeight: '700',
+    letterSpacing: '-0.5px',
+    lineHeight: 1,
+  },
+  exportBtn: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    padding: '5px 10px',
+    background: 'transparent',
+    border: '1px solid var(--border-default)',
+    borderRadius: 'var(--radius-md)',
+    color: 'var(--text-secondary)',
+    fontSize: '12px',
+    fontWeight: '500',
+    cursor: 'pointer',
+    letterSpacing: '0.01em',
+  },
+  row: {
+    transition: 'background 0.1s',
+  },
+  descText: {
+    display: 'block',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+    maxWidth: '320px',
+  },
+  ackBtn: {
+    padding: '4px 10px',
+    background: 'var(--blue-subtle)',
+    border: '1px solid var(--blue-border)',
+    borderRadius: 'var(--radius-sm)',
+    color: 'var(--blue)',
+    fontSize: '11px',
+    fontWeight: '600',
+    cursor: 'pointer',
+    letterSpacing: '0.02em',
+  },
+  resolveBtn: {
+    padding: '4px 10px',
+    background: 'var(--green-subtle)',
+    border: '1px solid var(--green-border)',
+    borderRadius: 'var(--radius-sm)',
+    color: 'var(--green)',
+    fontSize: '11px',
+    fontWeight: '600',
+    cursor: 'pointer',
+    letterSpacing: '0.02em',
+  },
 };

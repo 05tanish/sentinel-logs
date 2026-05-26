@@ -1,52 +1,30 @@
 import { useState } from 'react';
 import api from '../api/axios';
+import * as ui from './ui';
 
 export default function ResetPasswordModal({ isOpen, onClose, onSuccess, user }) {
-  const [form, setForm] = useState({
-    newPassword: '',
-    confirmPassword: ''
-  });
+  const [form, setForm] = useState({ newPassword: '', confirmPassword: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-
-    if (form.newPassword !== form.confirmPassword) {
-      setError('Passwords do not match');
-      return;
-    }
-
-    if (form.newPassword.length < 8) {
-      setError('Password must be at least 8 characters long');
-      return;
-    }
-
-    if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{}|;:,.<>?])/.test(form.newPassword)) {
-      setError('Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character');
-      return;
-    }
+    if (form.newPassword !== form.confirmPassword) return setError('Passwords do not match');
+    if (form.newPassword.length < 8) return setError('Password must be at least 8 characters');
+    if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{}|;:,.<>?])/.test(form.newPassword))
+      return setError('Must include uppercase, lowercase, number, and special character');
 
     setLoading(true);
     try {
-      await api.put('/api/auth/reset-password', {
-        userId: user.id,
-        newPassword: form.newPassword
-      });
-      
+      await api.put('/api/auth/reset-password', { userId: user.id, newPassword: form.newPassword });
       setForm({ newPassword: '', confirmPassword: '' });
       onSuccess?.();
       onClose();
     } catch (err) {
-      const errorMessage = err.response?.data?.message || 'Failed to reset password';
-      const errorDetails = err.response?.data?.errors;
-      
-      if (errorDetails && Array.isArray(errorDetails) && errorDetails.length > 0) {
-        setError(`${errorMessage}: ${errorDetails.join(', ')}`);
-      } else {
-        setError(errorMessage);
-      }
+      const msg = err.response?.data?.message || 'Failed to reset password';
+      const details = err.response?.data?.errors;
+      setError(details?.length ? `${msg}: ${details.join(', ')}` : msg);
     } finally {
       setLoading(false);
     }
@@ -61,52 +39,39 @@ export default function ResetPasswordModal({ isOpen, onClose, onSuccess, user })
   if (!isOpen || !user) return null;
 
   return (
-    <div style={styles.overlay}>
-      <div style={styles.modal}>
-        <div style={styles.header}>
-          <h3 style={styles.title}>Reset Password for {user.username}</h3>
-          <button style={styles.closeBtn} onClick={handleClose}>×</button>
+    <div style={s.overlay}>
+      <div style={s.modal}>
+        <div style={s.header}>
+          <span style={s.title}>Reset password</span>
+          <button style={s.closeBtn} onClick={handleClose}><CloseIcon /></button>
         </div>
 
-        <form onSubmit={handleSubmit} style={styles.form}>
-          {error && <div style={styles.error}>{error}</div>}
-          
-          <div style={styles.warning}>
-            You are about to reset the password for user <strong>{user.username}</strong>. 
-            They will need to use the new password to log in.
-          </div>
-
-          <div style={styles.field}>
-            <label style={styles.label}>New Password</label>
-            <input
-              style={styles.input}
-              type="password"
-              value={form.newPassword}
-              onChange={(e) => setForm({ ...form, newPassword: e.target.value })}
-              required
-            />
-            <div style={styles.hint}>
-              Must be at least 8 characters with uppercase, lowercase, number, and special character
+        <form onSubmit={handleSubmit} style={s.body}>
+          {error && (
+            <div style={s.errorBanner}>
+              <span style={s.errorDot} />
+              {error}
             </div>
+          )}
+
+          <div style={s.warningBanner}>
+            Resetting password for <strong style={{ color: 'var(--text-primary)' }}>{user.username}</strong>.
+            They will need to use the new password on next login.
           </div>
 
-          <div style={styles.field}>
-            <label style={styles.label}>Confirm New Password</label>
-            <input
-              style={styles.input}
-              type="password"
-              value={form.confirmPassword}
-              onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })}
-              required
-            />
-          </div>
+          <Field label="New password" hint="Min 8 chars · uppercase · lowercase · number · special">
+            <input style={ui.input} type="password" value={form.newPassword}
+              onChange={(e) => setForm({ ...form, newPassword: e.target.value })} required />
+          </Field>
+          <Field label="Confirm new password">
+            <input style={ui.input} type="password" value={form.confirmPassword}
+              onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })} required />
+          </Field>
 
-          <div style={styles.actions}>
-            <button type="button" style={styles.cancelBtn} onClick={handleClose}>
-              Cancel
-            </button>
-            <button type="submit" style={styles.submitBtn} disabled={loading}>
-              {loading ? 'Resetting...' : 'Reset Password'}
+          <div style={s.actions}>
+            <button type="button" style={ui.btnGhost} onClick={handleClose}>Cancel</button>
+            <button type="submit" style={s.submitBtn} disabled={loading}>
+              {loading ? 'Resetting…' : 'Reset password'}
             </button>
           </div>
         </form>
@@ -115,123 +80,74 @@ export default function ResetPasswordModal({ isOpen, onClose, onSuccess, user })
   );
 }
 
-const styles = {
+const Field = ({ label, hint, children }) => (
+  <div style={{ marginBottom: '16px' }}>
+    <label style={ui.label}>{label}</label>
+    {children}
+    {hint && <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginTop: '5px' }}>{hint}</div>}
+  </div>
+);
+
+const CloseIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+    <path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+  </svg>
+);
+
+const s = {
   overlay: {
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 1000
+    position: 'fixed', inset: 0,
+    background: 'rgba(0,0,0,0.6)',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    zIndex: 1000, padding: '24px',
   },
   modal: {
-    background: '#1a1d27',
-    border: '1px solid #2d3148',
-    borderRadius: 12,
-    width: '100%',
-    maxWidth: 400,
-    margin: 20
+    background: 'var(--bg-overlay)',
+    border: '1px solid var(--border-default)',
+    borderRadius: '10px',
+    width: '100%', maxWidth: '400px',
+    boxShadow: 'var(--shadow-lg)',
   },
   header: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: '20px 24px',
-    borderBottom: '1px solid #2d3148'
+    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+    padding: '18px 20px',
+    borderBottom: '1px solid var(--border-subtle)',
   },
   title: {
-    fontSize: 18,
-    fontWeight: 600,
-    color: '#e2e8f0',
-    margin: 0
+    fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)',
   },
   closeBtn: {
-    background: 'none',
-    border: 'none',
-    color: '#64748b',
-    fontSize: 24,
-    cursor: 'pointer',
-    padding: 0,
-    width: 24,
-    height: 24,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center'
+    background: 'none', border: 'none',
+    color: 'var(--text-tertiary)', cursor: 'pointer',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    padding: '4px', borderRadius: 'var(--radius-sm)',
   },
-  form: {
-    padding: 24
+  body: { padding: '20px' },
+  errorBanner: {
+    display: 'flex', alignItems: 'center', gap: '8px',
+    background: 'var(--red-subtle)', border: '1px solid var(--red-border)',
+    color: 'var(--red)', padding: '9px 12px',
+    borderRadius: 'var(--radius-md)', fontSize: '12px', marginBottom: '16px',
   },
-  warning: {
-    background: '#2d1f1b',
-    border: '1px solid #7c2d12',
-    color: '#fed7aa',
-    padding: '12px 16px',
-    borderRadius: 8,
-    fontSize: 14,
-    marginBottom: 20
+  errorDot: {
+    width: '6px', height: '6px', borderRadius: '50%',
+    background: 'var(--red)', flexShrink: 0,
   },
-  field: {
-    marginBottom: 20
-  },
-  label: {
-    display: 'block',
-    fontSize: 14,
-    color: '#e2e8f0',
-    marginBottom: 8,
-    fontWeight: 500
-  },
-  input: {
-    width: '100%',
-    padding: '12px 16px',
-    background: '#0f1117',
-    border: '1px solid #2d3148',
-    borderRadius: 8,
-    color: '#e2e8f0',
-    fontSize: 14,
-    outline: 'none',
-    boxSizing: 'border-box'
-  },
-  hint: {
-    fontSize: 12,
-    color: '#64748b',
-    marginTop: 6
-  },
-  error: {
-    background: '#2d1b1b',
-    border: '1px solid #7f1d1d',
-    color: '#fca5a5',
-    padding: '12px 16px',
-    borderRadius: 8,
-    fontSize: 14,
-    marginBottom: 20
+  warningBanner: {
+    background: 'var(--orange-subtle)',
+    border: '1px solid var(--orange-border)',
+    color: 'var(--text-secondary)',
+    padding: '10px 14px',
+    borderRadius: 'var(--radius-md)',
+    fontSize: '13px',
+    marginBottom: '20px',
+    lineHeight: '1.5',
   },
   actions: {
-    display: 'flex',
-    gap: 12,
-    justifyContent: 'flex-end',
-    marginTop: 24
-  },
-  cancelBtn: {
-    padding: '10px 20px',
-    background: 'transparent',
-    border: '1px solid #2d3148',
-    color: '#94a3b8',
-    borderRadius: 8,
-    cursor: 'pointer',
-    fontSize: 14
+    display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '20px',
   },
   submitBtn: {
-    padding: '10px 20px',
-    background: '#dc2626',
-    border: 'none',
-    color: 'white',
-    borderRadius: 8,
-    cursor: 'pointer',
-    fontSize: 14,
-    fontWeight: 500
-  }
+    ...ui.btnPrimary,
+    background: 'var(--red)',
+  },
 };

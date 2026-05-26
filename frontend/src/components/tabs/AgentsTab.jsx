@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import api from '../../api/axios';
+import * as ui from '../ui';
 
 export default function AgentsTab() {
   const [agents, setAgents] = useState([]);
@@ -17,60 +18,67 @@ export default function AgentsTab() {
 
   useEffect(() => {
     load();
-    // refresh every 30 seconds
     const interval = setInterval(load, 30000);
     return () => clearInterval(interval);
   }, []);
 
-  const getStatusColor = (agent) => {
-    if (agent.status === 'offline') return '#f87171';
-    if (agent.seconds_ago > 120) return '#fbbf24'; // warning if > 2 min
-    return '#34d399'; // green
+  const statusInfo = (agent) => {
+    if (agent.status === 'offline') return { label: 'Offline', color: 'var(--red)',    dot: 'var(--red)'    };
+    if (agent.seconds_ago > 120)   return { label: 'Stale',   color: 'var(--yellow)', dot: 'var(--yellow)' };
+    return                                 { label: 'Online',  color: 'var(--green)',  dot: 'var(--green)'  };
   };
 
-  const formatLastSeen = (seconds) => {
-    if (seconds < 60) return `${seconds}s ago`;
-    if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
-    return `${Math.floor(seconds / 3600)}h ago`;
+  const fmtLastSeen = (sec) => {
+    if (sec < 60)   return `${sec}s ago`;
+    if (sec < 3600) return `${Math.floor(sec / 60)}m ago`;
+    return `${Math.floor(sec / 3600)}h ago`;
   };
 
   return (
     <div>
-      <div style={styles.tableWrap}>
-        <div style={styles.tableHeader}>
-          <h3 style={{ fontSize: 15 }}>Agent Status</h3>
-          <button style={styles.refreshBtn} onClick={load}>↻ Refresh</button>
+      <div style={ui.card}>
+        <div style={ui.tableHeader}>
+          <span style={ui.tableTitle}>Agents</span>
+          <button style={ui.btnGhost} onClick={load}>
+            <RefreshIcon /> Refresh
+          </button>
         </div>
 
         {loading ? (
-          <div style={styles.empty}>Loading...</div>
+          <div style={ui.emptyState}>Loading…</div>
         ) : agents.length === 0 ? (
-          <div style={styles.empty}>No agents registered yet</div>
+          <div style={ui.emptyState}>No agents registered</div>
         ) : (
-          <table style={styles.table}>
+          <table>
             <thead>
               <tr>
-                {['Status', 'Source', 'Hostname', 'Platform', 'Last Seen'].map((h) => (
-                  <th key={h} style={styles.th}>{h}</th>
+                {['Status', 'Source', 'Hostname', 'Platform', 'Last seen'].map((h) => (
+                  <th key={h} style={ui.th}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {agents.map((a) => (
-                <tr key={a.source}>
-                  <td style={styles.td}>
-                    <span style={{ color: getStatusColor(a), fontWeight: 700 }}>
-                      ● {a.status === 'offline' ? 'OFFLINE' : 'Online'}
-                    </span>
-                  </td>
-                  <td style={styles.td}>{a.source}</td>
-                  <td style={styles.td}>{a.hostname || '—'}</td>
-                  <td style={styles.td}>{a.platform || '—'}</td>
-                  <td style={{ ...styles.td, color: getStatusColor(a) }}>
-                    {formatLastSeen(a.seconds_ago)}
-                  </td>
-                </tr>
-              ))}
+              {agents.map((a) => {
+                const st = statusInfo(a);
+                return (
+                  <tr key={a.source}>
+                    <td style={ui.td}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
+                        <span style={{ ...s.dot, background: st.dot }} />
+                        <span style={{ color: st.color, fontSize: '12px', fontWeight: '600' }}>
+                          {st.label}
+                        </span>
+                      </div>
+                    </td>
+                    <td style={ui.tdPrimary}>{a.source}</td>
+                    <td style={ui.td}>{a.hostname || <Dash />}</td>
+                    <td style={ui.td}>{a.platform || <Dash />}</td>
+                    <td style={{ ...ui.td, color: st.color, fontFamily: 'var(--font-mono)', fontSize: '12px' }}>
+                      {fmtLastSeen(a.seconds_ago)}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         )}
@@ -79,12 +87,19 @@ export default function AgentsTab() {
   );
 }
 
-const styles = {
-  tableWrap: { background: '#1a1d27', border: '1px solid #2d3148', borderRadius: 10, overflow: 'hidden' },
-  tableHeader: { padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #2d3148' },
-  refreshBtn: { background: '#2d3148', border: 'none', color: '#94a3b8', padding: '6px 14px', borderRadius: 6, cursor: 'pointer', fontSize: 13 },
-  table: { width: '100%', borderCollapse: 'collapse' },
-  th: { background: '#0f1117', padding: '12px 16px', textAlign: 'left', fontSize: 12, color: '#64748b', textTransform: 'uppercase' },
-  td: { padding: '12px 16px', fontSize: 13, borderTop: '1px solid #2d3148', color: '#e2e8f0' },
-  empty: { padding: 40, textAlign: 'center', color: '#64748b', fontSize: 14 },
+const Dash = () => <span style={{ color: 'var(--text-disabled)' }}>—</span>;
+
+const RefreshIcon = () => (
+  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+    <path d="M10 6A4 4 0 1 1 6 2a4 4 0 0 1 3.5 2.1M10 2v2.5H7.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
+
+const s = {
+  dot: {
+    width: '7px',
+    height: '7px',
+    borderRadius: '50%',
+    flexShrink: 0,
+  },
 };
