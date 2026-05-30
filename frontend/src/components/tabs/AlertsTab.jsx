@@ -29,6 +29,24 @@ export default function AlertsTab() {
   const ack     = async (id) => { await api.patch(`/api/alerts/${id}/acknowledge`); load(); };
   const resolve = async (id) => { await api.patch(`/api/alerts/${id}/resolve`);     load(); };
 
+  const download = async (format) => {
+    try {
+      const res = await api.get(`/api/reports/${format}`, {
+        responseType: 'blob',
+      });
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `siem-alerts-${new Date().toISOString().split('T')[0]}.${format}`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error(`${format.toUpperCase()} download failed:`, err);
+    }
+  };
+
   const statItems = [
     { label: 'Open',      value: stats?.open,     accent: 'var(--text-primary)' },
     { label: 'Critical',  value: stats?.critical,  accent: 'var(--red)'    },
@@ -56,8 +74,8 @@ export default function AlertsTab() {
         <div style={ui.tableHeader}>
           <span style={ui.tableTitle}>Open Alerts</span>
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-            <a href="/api/reports/csv" style={s.exportBtn}>CSV</a>
-            <a href="/api/reports/pdf" style={s.exportBtn}>PDF</a>
+            <button style={s.exportBtn} onClick={() => download('csv')}>CSV</button>
+            <button style={s.exportBtn} onClick={() => download('pdf')}>PDF</button>
             <button style={ui.btnGhost} onClick={load}>
               <RefreshIcon /> Refresh
             </button>
