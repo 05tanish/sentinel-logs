@@ -232,8 +232,9 @@ export const downloadPDF = AsyncHandeler(async (req, res) => {
     // header row
     doc.rect(LEFT, doc.y, W, rowH).fill(COLORS.bg);
     doc.fontSize(8).font('Helvetica-Bold').fillColor(COLORS.white);
-    doc.text('IP ADDRESS', LEFT + 8, doc.y + 6, { width: ipColW[0] });
-    doc.text('ALERT COUNT', LEFT + ipColW[0] + 8, doc.y - rowH + 6, { width: ipColW[1] });
+    const ipHeaderTop = doc.y + 6;
+    doc.text('IP ADDRESS',   LEFT + 8,             ipHeaderTop, { width: ipColW[0] });
+    doc.text('ALERT COUNT',  LEFT + ipColW[0] + 8, ipHeaderTop, { width: ipColW[1] });
     doc.y += rowH;
 
     topIPs.forEach((row, i) => {
@@ -241,9 +242,10 @@ export const downloadPDF = AsyncHandeler(async (req, res) => {
       doc.rect(LEFT, doc.y, W, rowH).fill(bg);
       doc.moveTo(LEFT, doc.y).lineTo(LEFT + W, doc.y).strokeColor(COLORS.border).lineWidth(0.5).stroke();
 
+      const ipRowTop = doc.y + 5;
       doc.fontSize(9).font('Helvetica').fillColor(COLORS.text);
-      doc.text(row.source_ip, LEFT + 8, doc.y + 5, { width: ipColW[0] });
-      doc.text(String(row.count), LEFT + ipColW[0] + 8, doc.y - rowH + 5, { width: ipColW[1] });
+      doc.text(row.source_ip,    LEFT + 8,             ipRowTop, { width: ipColW[0] });
+      doc.text(String(row.count),LEFT + ipColW[0] + 8, ipRowTop, { width: ipColW[1] });
       doc.y += rowH;
     });
 
@@ -271,8 +273,9 @@ export const downloadPDF = AsyncHandeler(async (req, res) => {
   doc.rect(LEFT, doc.y, W, rowH).fill(COLORS.bg);
   doc.fontSize(7).font('Helvetica-Bold').fillColor(COLORS.white);
   let cx = LEFT + 6;
+  const headerTop = doc.y + 7;
   cols.forEach((col) => {
-    doc.text(col.label, cx, doc.y - rowH + 7, { width: col.w - 4, ellipsis: true });
+    doc.text(col.label, cx, headerTop, { width: col.w - 4, ellipsis: true });
     cx += col.w;
   });
   doc.y += rowH;
