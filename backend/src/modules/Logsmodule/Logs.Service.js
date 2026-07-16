@@ -5,6 +5,7 @@ import { pool, queryWithRetry } from '../../config/db.js';
 import { dbQueryWrapper, ValidationError, DatabaseError } from '../../middelware/ErrorMiddelware.js';
 import { metrics } from '../../middelware/metrics.js';
 import { parseLog } from './parser.js';
+import { runRuleEngine } from './RuleEngine.js';
 
 export { parseLog };
 
@@ -171,6 +172,7 @@ export const processLogFile = async (filePath, source = 'file-upload') => {
             source: `${source}:${filePath}`, 
             parsed 
           });
+          runRuleEngine(parsed).catch(console.error);
           processed++;
         } catch (err) {
           errors++;
