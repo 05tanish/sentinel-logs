@@ -33,7 +33,7 @@ export default function ChangePasswordModal({ isOpen, onClose, onSuccess }) {
     e.preventDefault();
     setError('');
     if (form.newPassword !== form.confirmPassword) return setError('Passwords do not match.');
-    if (form.newPassword.length < 8) return setError('Password must be at least 8 characters.');
+    if (form.newPassword.length < 12) return setError('Password must be at least 12 characters.');
     if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{}|;:,.<>?])/.test(form.newPassword))
       return setError('Must include uppercase, lowercase, number, and special character.');
 
@@ -98,7 +98,7 @@ export default function ChangePasswordModal({ isOpen, onClose, onSuccess }) {
             />
           </Field>
 
-          <Field label="New password" htmlFor="cp-new" hint="Min 8 chars · uppercase · lowercase · number · special">
+          <Field label="New password" htmlFor="cp-new" hint="Min 12 chars · uppercase · lowercase · number · special character">
             <input
               id="cp-new"
               style={ui.input}

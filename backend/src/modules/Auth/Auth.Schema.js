@@ -8,13 +8,19 @@ export const loginSchema = z.object({
 export const changePasswordSchema = z.object({
   currentPassword: z.string().min(1, 'Current password is required'),
   newPassword: z.string()
-    .min(8, 'Password must be at least 8 characters long')
-    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, 'Password must contain at least one uppercase letter, one lowercase letter, and one number'),
+    .min(12, 'Password must be at least 12 characters long')
+    .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+    .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
+    .regex(/[0-9]/, 'Password must contain at least one numeric digit')
+    .regex(/[!@#$%^&*()_+\-=[\]{}|;:,.<>?]/, 'Password must contain at least one special character'),
 });
 
 export const resetPasswordSchema = z.object({
   userId: z.number().int().positive('Valid user ID is required'),
   newPassword: z.string()
-    .min(8, 'Password must be at least 8 characters long')
-    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, 'Password must contain at least one uppercase letter, one lowercase letter, and one number'),
+    .min(12, 'Password must be at least 12 characters long')
+    .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+    .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
+    .regex(/[0-9]/, 'Password must contain at least one numeric digit')
+    .regex(/[!@#$%^&*()_+\-=[\]{}|;:,.<>?]/, 'Password must contain at least one special character'),
 });
