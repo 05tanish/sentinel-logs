@@ -4,8 +4,6 @@ import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
 import compression from 'compression';
 import dotenv from 'dotenv';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
 import { errorHandler, notFoundHandler, asyncHandler } from './middelware/ErrorMiddelware.js';
 import { metricsMiddleware, metricsEndpoint } from './middelware/metrics.js';
 import { checkDBHealth, pool } from './config/db.js';
@@ -18,7 +16,6 @@ import reportsRoutes from './modules/Reports/Reports.Routes.js';
 
 dotenv.config();
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export const app = express();
 
@@ -222,37 +219,17 @@ app.get('/api/admin/errors', asyncHandler(async (req, res) => {
   res.json({ success: true, data: errors.rows });
 }));
 
-// 404 handler for API routes only
+// Debug: Check NODE_ENV
+console.log('NODE_ENV:', process.env.NODE_ENV);
+
+// 404 handler for unmatched API routes — static assets are served by Nginx,
+// so any request that reaches Node and doesn't match an API route is a genuine 404.
 app.use((req, res, next) => {
   if (req.path.startsWith('/api/')) {
     return notFoundHandler(req, res, next);
   }
   next();
 });
-
-// Debug: Check NODE_ENV
-console.log('NODE_ENV:', process.env.NODE_ENV);
-console.log('Is production?', process.env.NODE_ENV === 'production');
-
-// Serve frontend production build (only in production)
-if (process.env.NODE_ENV === 'production') {
-  const frontendPath = join(__dirname, '../frontend/dist');
-  console.log('Serving frontend from:', frontendPath);
-  
-  app.use(express.static(frontendPath, {
-    maxAge: '1d',
-    etag: true,
-    lastModified: true
-  }));
-  
-  // Catch-all route to serve index.html for client-side routing
-  // Use regex to match all non-API routes
-  app.get(/^\/(?!api).*/, (req, res) => {
-    res.sendFile(join(frontendPath, 'index.html'));
-  });
-} else {
-  console.log('Not serving frontend - NODE_ENV is not production');
-}
 
 // Global error handler (must be last)
 app.use(errorHandler);

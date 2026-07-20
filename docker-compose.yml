@@ -13,6 +13,19 @@
 #   - "3000:3000"  →  "127.0.0.1:3000:3000"  (Grafana - internal only)
 
 services:
+  # ── Frontend builder ─────────────────────────────────────
+  # Builds the React app inside Docker on every `docker-compose up --build`.
+  # The compiled assets land in the named `frontend_dist` volume, which is
+  # mounted read-only into both nginx (serves them) and backend (SPA fallback).
+  frontend:
+    image: node:20-alpine
+    working_dir: /app
+    volumes:
+      - ./frontend:/app:ro
+      - frontend_dist:/app/dist
+    command: sh -c "npm ci && npm run build"
+    restart: "no"
+
   nginx:
     image: nginx:alpine
     ports:
@@ -21,8 +34,12 @@ services:
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./nginx/certs:/etc/nginx/certs:ro
+      - frontend_dist:/usr/share/nginx/html:ro
     depends_on:
-      - backend
+      frontend:
+        condition: service_completed_successfully
+      backend:
+        condition: service_started
     restart: always
 
   backend:
@@ -36,7 +53,7 @@ services:
     env_file:
       - .env
     volumes:
-      - ./frontend/dist:/app/frontend/dist:ro
+      - frontend_dist:/app/frontend/dist:ro
     depends_on:
       - loki
       - postgres
@@ -87,3 +104,4 @@ services:
 volumes:
   postgres_data:
   grafana_data:
+  frontend_dist:
