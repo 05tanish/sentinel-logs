@@ -1,7 +1,6 @@
 import { Router } from 'express';
 import { getLogs, analyzeLogs, ingestLog, getLogsBySeverity, uploadLogs, upload } from './Logs.Controller.js';
-import { authenticate, authenticateFlexible } from '../../middelware/Auth.js';
-import { authorize } from '../../middelware/Role.js';
+import { authenticate, authenticateFlexible, authorize } from '../../middelware/Auth.js';
 
 const router = Router();
 

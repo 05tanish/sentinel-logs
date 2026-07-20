@@ -1,6 +1,6 @@
 import PDFDocument from 'pdfkit';
 import { pool } from '../../config/db.js';
-import { AsyncHandeler } from '../../utilis/Aysnchandler.js';
+import { asyncHandler } from '../../middelware/ErrorMiddelware.js';
 
 // ─── Data Fetchers ────────────────────────────────────────
 
@@ -59,7 +59,7 @@ const fmtDate = (d) =>
 
 // ─── CSV ──────────────────────────────────────────────────
 
-export const downloadCSV = AsyncHandeler(async (req, res) => {
+export const downloadCSV = asyncHandler(async (req, res) => {
   const { from, to } = req.query;
   const alerts = await fetchAlerts(from, to);
   const stats  = await fetchStats();
@@ -125,7 +125,7 @@ export const downloadCSV = AsyncHandeler(async (req, res) => {
 
 // ─── PDF ──────────────────────────────────────────────────
 
-export const downloadPDF = AsyncHandeler(async (req, res) => {
+export const downloadPDF = asyncHandler(async (req, res) => {
   const { from, to } = req.query;
   const [alerts, stats, topIPs] = await Promise.all([
     fetchAlerts(from, to),

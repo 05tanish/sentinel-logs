@@ -1,7 +1,6 @@
 import { Router } from 'express';
 import { downloadCSV, downloadPDF } from './Reports.Controller.js';
-import { authenticate } from '../../middelware/Auth.js';
-import { authorize } from '../../middelware/Role.js';
+import { authenticate, authorize } from '../../middelware/Auth.js';
 
 const router = Router();
 

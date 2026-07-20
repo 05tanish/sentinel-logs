@@ -1,5 +1,5 @@
 import { AppError } from '../utilis/ApiResponse.js';
-import { AsyncHandeler } from '../utilis/Aysnchandler.js';
+import { asyncHandler } from '../middelware/ErrorMiddelware.js';
 import { verifyToken } from '../utilis/Jwt.js';
 import { pool } from '../config/db.js';
 import { dbQueryWrapper } from './ErrorMiddelware.js';
@@ -7,7 +7,7 @@ import { metrics } from './metrics.js';
 import { recordAudit, AUDIT_ACTIONS } from '../utilis/AuditTrail.js';
 
 // Enhanced authentication middleware with security improvements and metrics
-export const authenticate = AsyncHandeler(async (req, res, next) => {
+export const authenticate = asyncHandler(async (req, res, next) => {
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -84,7 +84,7 @@ export const authenticate = AsyncHandeler(async (req, res, next) => {
 
 // Role-based authorization middleware
 export const authorize = (...allowedRoles) => {
-  return AsyncHandeler(async (req, res, next) => {
+  return asyncHandler(async (req, res, next) => {
     if (!req.user) {
       throw new AppError(401, 'Authentication required');
     }
@@ -108,7 +108,7 @@ export const requireAnalyst = authorize('admin', 'analyst');
 export const requireAuth = authorize('viewer', 'analyst', 'admin');
 
 // Optional authentication (doesn't fail if no token)
-export const optionalAuth = AsyncHandeler(async (req, res, next) => {
+export const optionalAuth = asyncHandler(async (req, res, next) => {
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -125,7 +125,7 @@ export const optionalAuth = AsyncHandeler(async (req, res, next) => {
 });
 
 // API key authentication for agents
-export const authenticateAgent = AsyncHandeler(async (req, res, next) => {
+export const authenticateAgent = asyncHandler(async (req, res, next) => {
   const apiKey = req.headers['x-api-key'] || req.query.apiKey;
 
   if (!apiKey) {
@@ -161,7 +161,7 @@ export const authenticateAgent = AsyncHandeler(async (req, res, next) => {
 });
 
 // Flexible authentication - accepts both JWT and API key
-export const authenticateFlexible = AsyncHandeler(async (req, res, next) => {
+export const authenticateFlexible = asyncHandler(async (req, res, next) => {
   const authHeader = req.headers.authorization;
   const apiKey = req.headers['x-api-key'];
 
@@ -190,7 +190,7 @@ export const authenticateFlexible = AsyncHandeler(async (req, res, next) => {
 });
 
 // Rate limiting for sensitive operations
-export const sensitiveOperationLimiter = AsyncHandeler(async (req, res, next) => {
+export const sensitiveOperationLimiter = asyncHandler(async (req, res, next) => {
   const key = `sensitive_${req.user?.id || req.ip}`;
   
   // This is a simple in-memory implementation
@@ -223,7 +223,7 @@ export const sensitiveOperationLimiter = AsyncHandeler(async (req, res, next) =>
 
 // Session validation middleware (checks token age)
 export const validateSession = (maxAgeHours = 24) => {
-  return AsyncHandeler(async (req, res, next) => {
+  return asyncHandler(async (req, res, next) => {
     if (!req.tokenIssued) {
       throw new AppError(401, 'Token information missing');
     }

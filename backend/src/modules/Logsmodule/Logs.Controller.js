@@ -1,7 +1,7 @@
 import { unlinkSync } from 'fs';
 import multer from 'multer';
 import { AppError } from '../../utilis/ApiResponse.js';
-import { AsyncHandeler } from '../../utilis/Aysnchandler.js';
+import { asyncHandler } from '../../middelware/ErrorMiddelware.js';
 import { successResponse } from '../../utilis/Sucessresponse.js';
 import { logSchema } from './Logs.Schema.js';
 import { runRuleEngine } from './RuleEngine.js';
@@ -28,17 +28,17 @@ export const upload = multer({
   },
 });
 
-export const getLogs = AsyncHandeler(async (_req, res) => {
+export const getLogs = asyncHandler(async (_req, res) => {
   const data = await fetchLogs();
   return successResponse(res, { message: 'Logs fetched', data });
 });
 
-export const analyzeLogs = AsyncHandeler(async (_req, res) => {
+export const analyzeLogs = asyncHandler(async (_req, res) => {
   const data = await fetchAndAnalyzeLogs();
   return successResponse(res, { message: 'Analysis complete', data });
 });
 
-export const ingestLog = AsyncHandeler(async (req, res) => {
+export const ingestLog = asyncHandler(async (req, res) => {
   const parsed_input = logSchema.safeParse(req.body);
   if (!parsed_input.success) {
     throw new AppError(400, 'Validation failed', parsed_input.error.errors);
@@ -57,14 +57,14 @@ export const ingestLog = AsyncHandeler(async (req, res) => {
   });
 });
 
-export const getLogsBySeverity = AsyncHandeler(async (req, res) => {
+export const getLogsBySeverity = asyncHandler(async (req, res) => {
   const { severity } = req.params;
   const data = await fetchLogsBySeverity(severity);
   return successResponse(res, { message: `Logs with severity ${severity} fetched`, data });
 });
 
 // POST /api/logs/upload — file upload from USB or local machine
-export const uploadLogs = AsyncHandeler(async (req, res) => {
+export const uploadLogs = asyncHandler(async (req, res) => {
   if (!req.file) {
     throw new AppError(400, 'No file uploaded');
   }

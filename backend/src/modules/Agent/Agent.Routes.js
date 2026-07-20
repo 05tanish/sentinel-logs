@@ -1,7 +1,6 @@
 import { Router } from 'express';
 import { heartbeat, getAgentStatus } from './Agent.Controller.js';
-import { authenticate, authenticateAgent } from '../../middelware/Auth.js';
-import { authorize } from '../../middelware/Role.js';
+import { authenticate, authenticateAgent, authorize } from '../../middelware/Auth.js';
 
 const router = Router();
 

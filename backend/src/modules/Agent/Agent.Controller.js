@@ -1,9 +1,9 @@
-import { AsyncHandeler } from '../../utilis/Aysnchandler.js';
+import { asyncHandler } from '../../middelware/ErrorMiddelware.js';
 import { successResponse } from '../../utilis/Sucessresponse.js';
 import { upsertHeartbeat, getAgents } from './Agent.Service.js';
 
 // POST /api/agent/heartbeat
-export const heartbeat = AsyncHandeler(async (req, res) => {
+export const heartbeat = asyncHandler(async (req, res) => {
   const { source, hostname, platform } = req.body;
 
 // use apperror
@@ -17,7 +17,7 @@ export const heartbeat = AsyncHandeler(async (req, res) => {
 });
 
 // GET /api/agent/status
-export const getAgentStatus = AsyncHandeler(async (_req, res) => {
+export const getAgentStatus = asyncHandler(async (_req, res) => {
   const data = await getAgents();
   //pass status code also 
   return successResponse(res, { message: 'Agent status fetched', data });

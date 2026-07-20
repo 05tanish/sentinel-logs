@@ -1,7 +1,6 @@
 import { Router } from 'express';
 import { getAlerts, getAlert, acknowledge, resolve, stats } from './Alerts.Controller.js';
-import { authenticate } from '../../middelware/Auth.js';
-import { authorize } from '../../middelware/Role.js';
+import { authenticate, authorize } from '../../middelware/Auth.js';
 
 const router = Router();
 
