@@ -80,9 +80,82 @@ const checkRepeatedUserFailures = async (parsed) => {
   }
 };
 
+// Rule 3 — Privilege Escalation: any sudo/su/COMMAND event triggers a CRITICAL alert
+// The parser already classifies these as PRIVILEGE_ESCALATION — one occurrence is enough.
+const checkPrivilegeEscalation = async (parsed) => {
+  if (parsed.event_type !== 'PRIVILEGE_ESCALATION') return;
+
+  await createAlert({
+    type: 'PRIVILEGE_ESCALATION',
+    severity: 'CRITICAL',
+    description: `Privilege escalation detected${parsed.username ? ` by user '${parsed.username}'` : ''}${parsed.ip_address ? ` from ${parsed.ip_address}` : ''}`,
+    source_ip: parsed.ip_address,
+    username: parsed.username,
+    log_count: 1,
+  });
+};
+
+// Rule 4 — Firewall Block: 10+ blocked packets from the same source IP in 5 minutes.
+// A single firewall block is noise; a burst indicates active port-scanning or an attack.
+const checkFirewallBlock = async (parsed) => {
+  if (parsed.event_type !== 'FIREWALL_BLOCK') return;
+  if (!parsed.ip_address) return;
+
+  const result = await pool.query(
+    `SELECT COUNT(*) FROM logs
+     WHERE ip_address = $1
+     AND event_type = 'FIREWALL_BLOCK'
+     AND created_at >= NOW() - INTERVAL '5 minutes'`,
+    [parsed.ip_address]
+  );
+
+  const count = parseInt(result.rows[0].count);
+  if (count >= 10) {
+    await createAlert({
+      type: 'FIREWALL_BLOCK',
+      severity: 'MEDIUM',
+      description: `${count} firewall blocks from ${parsed.ip_address} in 5 minutes${parsed.port ? ` targeting port ${parsed.port}` : ''}`,
+      source_ip: parsed.ip_address,
+      username: null,
+      log_count: count,
+    });
+  }
+};
+
+// Rule 5 — HTTP Unauthorized: 15+ 401/403 responses from the same IP in 5 minutes.
+// Indicates credential stuffing or directory enumeration against the web interface.
+const checkHttpUnauthorized = async (parsed) => {
+  if (parsed.event_type !== 'FAILED_LOGIN' || parsed.format !== 'nginx') return;
+  if (!parsed.ip_address) return;
+
+  const result = await pool.query(
+    `SELECT COUNT(*) FROM logs
+     WHERE ip_address = $1
+     AND event_type = 'FAILED_LOGIN'
+     AND parsed->>'format' = 'nginx'
+     AND created_at >= NOW() - INTERVAL '5 minutes'`,
+    [parsed.ip_address]
+  );
+
+  const count = parseInt(result.rows[0].count);
+  if (count >= 15) {
+    await createAlert({
+      type: 'HTTP_UNAUTHORIZED',
+      severity: 'HIGH',
+      description: `${count} HTTP 401/403 responses to ${parsed.ip_address} in 5 minutes — possible credential stuffing or web enumeration`,
+      source_ip: parsed.ip_address,
+      username: parsed.username,
+      log_count: count,
+    });
+  }
+};
+
 export const runRuleEngine = async (parsed) => {
   await Promise.allSettled([
     checkBruteForce(parsed),
     checkRepeatedUserFailures(parsed),
+    checkPrivilegeEscalation(parsed),
+    checkFirewallBlock(parsed),
+    checkHttpUnauthorized(parsed),
   ]);
 };
