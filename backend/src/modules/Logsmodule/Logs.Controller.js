@@ -59,7 +59,8 @@ export const ingestLog = asyncHandler(async (req, res) => {
 
 export const getLogsBySeverity = asyncHandler(async (req, res) => {
   const { severity } = req.params;
-  const data = await fetchLogsBySeverity(severity);
+  const { limit, offset } = req.query;
+  const data = await fetchLogsBySeverity(severity, limit, offset);
   return successResponse(res, { message: `Logs with severity ${severity} fetched`, data });
 });
 
